@@ -33,8 +33,8 @@ interface ChatBodyProps {
 export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
   ({ conversation, isTyping, onQuickAction, onRetryMessage }, ref) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const { theme } = useTheme();
-    const logoSrc = `/logo-${theme.color}${theme.variant}.png`;
+    const { color, variant } = useTheme();
+    const logoSrc = `/logo-${color}${variant}.png`;
 
     const scrollToBottom = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

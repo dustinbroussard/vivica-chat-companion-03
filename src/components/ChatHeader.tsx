@@ -27,13 +27,13 @@ export const ChatHeader = ({
   onProfileChange,
   onOpenProfiles
 }: ChatHeaderProps) => {
-  const { theme, updateTheme } = useTheme();
+  const { color, variant, setVariant } = useTheme();
 
   const toggleVariant = () => {
-    updateTheme({ ...theme, variant: theme.variant === 'dark' ? 'light' : 'dark' });
+    setVariant(variant === 'dark' ? 'light' : 'dark');
   };
 
-  const logoSrc = `/logo-${theme.color}${theme.variant}.png`;
+  const logoSrc = `/logo-${color}${variant}.png`;
   return (
     <div className="flex items-center justify-between p-4 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
       <div className="flex items-center gap-3">

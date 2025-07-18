@@ -12,14 +12,14 @@ import {
 import { useTheme, ThemeColor, ThemeVariant } from "@/hooks/useTheme";
 
 export const ThemeSelector = () => {
-  const { theme, updateTheme } = useTheme();
+  const { color, variant, setColor, setVariant } = useTheme();
 
-  const handleColorChange = (color: ThemeColor) => {
-    updateTheme({ ...theme, color });
+  const handleColorChange = (c: ThemeColor) => {
+    setColor(c);
   };
 
-  const handleVariantChange = (variant: ThemeVariant) => {
-    updateTheme({ ...theme, variant });
+  const handleVariantChange = (v: ThemeVariant) => {
+    setVariant(v);
   };
 
   const themeOptions = [
@@ -40,7 +40,7 @@ export const ThemeSelector = () => {
       {/* Color Selection */}
       <div className="space-y-2">
         <Label className="text-sm">Color Scheme</Label>
-        <Select value={theme.color} onValueChange={handleColorChange}>
+        <Select value={color} onValueChange={handleColorChange}>
           <SelectTrigger>
             <SelectValue placeholder="Choose color scheme" />
           </SelectTrigger>
@@ -66,7 +66,7 @@ export const ThemeSelector = () => {
         <div className="flex gap-2">
           <Button
             type="button"
-            variant={theme.variant === 'dark' ? 'default' : 'outline'}
+            variant={variant === 'dark' ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleVariantChange('dark')}
             className="flex-1"
@@ -76,7 +76,7 @@ export const ThemeSelector = () => {
           </Button>
           <Button
             type="button"
-            variant={theme.variant === 'light' ? 'default' : 'outline'}
+            variant={variant === 'light' ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleVariantChange('light')}
             className="flex-1"
@@ -88,7 +88,7 @@ export const ThemeSelector = () => {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Current: {themeOptions.find(t => t.value === theme.color)?.label} {theme.variant === 'dark' ? 'Dark' : 'Light'}
+        Current: {themeOptions.find(t => t.value === color)?.label} {variant === 'dark' ? 'Dark' : 'Light'}
       </p>
     </div>
   );

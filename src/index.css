@@ -70,61 +70,8 @@
   }
 }
 
-/* Color Theme Classes - These work together with data-theme attributes */
-.theme-default {
-  --theme-primary: 0 0% 100%;
-  --theme-accent: 0 0% 80%;
-  --accent-primary: var(--theme-primary);
-  --accent-secondary: var(--theme-accent);
-}
-
-.theme-blue {
-  --theme-primary: 210 100% 50%;
-  --theme-accent: 210 100% 60%;
-  --accent-primary: var(--theme-primary);
-  --accent-secondary: var(--theme-accent);
-  /* Override shadcn variables with blue theme */
-  --primary: 210 100% 50%;
-  --accent: 210 100% 50%;
-  --ring: 210 100% 50%;
-}
-
-.theme-red {
-  --theme-primary: 0 84% 60%;
-  --theme-accent: 0 91% 71%;
-  --accent-primary: var(--theme-primary);
-  --accent-secondary: var(--theme-accent);
-  /* Override shadcn variables with red theme */
-  --primary: 0 84% 60%;
-  --accent: 0 84% 60%;
-  --ring: 0 84% 60%;
-}
-
-.theme-green {
-  --theme-primary: 160 84% 39%;
-  --theme-accent: 158 64% 52%;
-  --accent-primary: var(--theme-primary);
-  --accent-secondary: var(--theme-accent);
-  /* Override shadcn variables with green theme */
-  --primary: 160 84% 39%;
-  --accent: 160 84% 39%;
-  --ring: 160 84% 39%;
-}
-
-.theme-purple {
-  --theme-primary: 280 100% 70%;
-  --theme-accent: 285 100% 80%;
-  --accent-primary: var(--theme-primary);
-  --accent-secondary: var(--theme-accent);
-  /* Override shadcn variables with purple theme */
-  --primary: 280 100% 70%;
-  --accent: 280 100% 70%;
-  --ring: 280 100% 70%;
-}
-
 /* DEFAULT DARK THEME - Black */
-[data-theme="default-dark"],
-.dark-mode {
+[data-theme="default-dark"] {
   --bg-primary: 0 0% 0%;
   --bg-secondary: 0 0% 4%;
   --bg-tertiary: 0 0% 7%;
@@ -157,8 +104,7 @@
 }
 
 /* DEFAULT LIGHT THEME - White */
-[data-theme="default-light"],
-.light-mode {
+[data-theme="default-light"] {
   --bg-primary: 0 0% 100%;
   --bg-secondary: 0 0% 96%;
   --bg-tertiary: 0 0% 88%;
