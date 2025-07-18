@@ -1,21 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Storage, DebouncedStorage } from '@/utils/storage';
 
-interface UsePersistedStateOptions {
+interface UsePersistedStateOptions<T> {
   debounceMs?: number;
-  serialize?: (value: any) => any;
-  deserialize?: (value: any) => any;
+  serialize?: (value: T) => unknown;
+  deserialize?: (value: unknown) => T;
 }
 
 export function usePersistedState<T>(
   key: string,
   defaultValue: T,
-  options: UsePersistedStateOptions = {}
+  options: UsePersistedStateOptions<T> = {}
 ): [T, (value: T | ((prev: T) => T)) => void] {
   const {
     debounceMs = 500,
-    serialize = (v) => v,
-    deserialize = (v) => v
+    serialize = (v: T) => v,
+    deserialize = (v: unknown) => v as T
   } = options;
 
   // Initialize state from storage

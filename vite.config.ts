@@ -24,7 +24,10 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'icons/*', 'lovable-uploads/*'],
-      manifest
+      manifest,
+      workbox: {
+        navigateFallback: 'offline.html'
+      }
     }),
   ].filter(Boolean),
   resolve: {
