@@ -5,8 +5,8 @@ export type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking';
 // TypeScript declarations for Web Speech API
 declare global {
   interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
   }
 }
 
@@ -41,7 +41,7 @@ export const useVoice = (): UseVoiceReturn => {
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const animationFrameRef = useRef<number>();
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
 
@@ -89,7 +89,7 @@ export const useVoice = (): UseVoiceReturn => {
       
       mediaStreamRef.current = stream;
 
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       const audioContext = new AudioContextClass();
       audioContextRef.current = audioContext;
 
@@ -111,7 +111,7 @@ export const useVoice = (): UseVoiceReturn => {
   const setupSpeechRecognition = useCallback(() => {
     if (!isSupported) return;
 
-    const SpeechRecognitionClass = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognitionClass = window.SpeechRecognition || (window as unknown as { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
     const recognition = new SpeechRecognitionClass();
     
     recognition.continuous = true;

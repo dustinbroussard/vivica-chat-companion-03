@@ -25,7 +25,8 @@ export const useInstallPrompt = (): UseInstallPromptReturn => {
       // Check if running in standalone mode (installed as PWA)
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isIOSStandalone = isIOS && (navigator as any).standalone;
+      const nav = navigator as Navigator & { standalone?: boolean };
+      const isIOSStandalone = isIOS && nav.standalone;
       
       setIsInstalled(isStandalone || isIOSStandalone);
     };
