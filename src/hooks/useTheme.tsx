@@ -5,16 +5,21 @@ import {
   createContext,
   useContext,
 } from 'react';
+import { Storage, DebouncedStorage, STORAGE_KEYS } from '@/utils/storage';
 
 export type ThemeVariant = 'dark' | 'light';
 export type ThemeColor = 'default' | 'blue' | 'red' | 'green' | 'purple';
 
+// Add a toggleVariant function for compatibility
 interface ThemeContextValue {
   color: ThemeColor;
   variant: ThemeVariant;
   setColor: (color: ThemeColor) => void;
   setVariant: (variant: ThemeVariant) => void;
+  toggleVariant: () => void;
 }
+
+// Remove duplicate interface since we defined it above
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
@@ -23,25 +28,22 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [variant, setVariant] = useState<ThemeVariant>('dark');
 
   useEffect(() => {
-    const saved = localStorage.getItem('vivica-theme');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved) as { color: ThemeColor; variant: ThemeVariant };
-        setColor(parsed.color);
-        setVariant(parsed.variant);
-      } catch {
-        // ignore invalid values
-      }
-    }
+    const saved = Storage.get(STORAGE_KEYS.THEME, { color: 'default' as ThemeColor, variant: 'dark' as ThemeVariant });
+    setColor(saved.color as ThemeColor);
+    setVariant(saved.variant as ThemeVariant);
   }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', `${color}-${variant}`);
-    localStorage.setItem('vivica-theme', JSON.stringify({ color, variant }));
+    DebouncedStorage.set(STORAGE_KEYS.THEME, { color, variant }, 300);
   }, [color, variant]);
 
+  const toggleVariant = () => {
+    setVariant(variant === 'dark' ? 'light' : 'dark');
+  };
+
   return (
-    <ThemeContext.Provider value={{ color, variant, setColor, setVariant }}>
+    <ThemeContext.Provider value={{ color, variant, setColor, setVariant, toggleVariant }}>
       {children}
     </ThemeContext.Provider>
   );
