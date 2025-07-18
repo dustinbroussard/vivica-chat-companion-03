@@ -60,7 +60,7 @@ export const ChatHeader = ({
 
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={toggleVariant}>
-          {theme.variant === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          {variant === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </Button>
       </div>
     </div>
