@@ -378,9 +378,6 @@ const Index = () => {
     }
   };
 
-  const handleQuickAction = (prompt: string) => {
-    handleSendMessage(prompt);
-  };
 
   const handleVoiceToggle = () => {
     setIsVoiceMode(!isVoiceMode);
@@ -462,7 +459,6 @@ const Index = () => {
           ref={chatBodyRef}
           conversation={currentConversation}
           isTyping={isTyping}
-          onQuickAction={handleQuickAction}
           onRetryMessage={handleRetryMessage}
         />
         

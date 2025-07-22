@@ -1,0 +1,96 @@
+import { useEffect, useState } from 'react';
+import { Storage } from '@/utils/storage';
+
+interface Headline {
+  title: string;
+  link: string;
+}
+
+async function fetchRSSSummariesWithLinks(urls: string[]): Promise<Headline[]> {
+  const parser = new DOMParser();
+  const headlines: Headline[] = [];
+  
+  for (const url of urls) {
+    try {
+      const resp = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+      const data = await resp.json();
+      const doc = parser.parseFromString(data.contents, 'text/xml');
+      const item = doc.querySelector('item');
+      if (item) {
+        const title = item.querySelector('title')?.textContent?.trim();
+        const link = item.querySelector('link')?.textContent?.trim();
+        if (title && link) {
+          headlines.push({ title, link });
+        }
+      }
+    } catch (err) {
+      console.debug('Failed to fetch RSS feed:', url, err);
+    }
+  }
+  return headlines;
+}
+
+export const RSSWidget = () => {
+  const [currentHeadline, setCurrentHeadline] = useState<Headline | null>(null);
+  const [headlines, setHeadlines] = useState<Headline[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [opacity, setOpacity] = useState(1);
+
+  useEffect(() => {
+    const loadRSSFeeds = async () => {
+      const settings = Storage.get('vivica-settings', { rssFeeds: '' });
+      if (!settings.rssFeeds) {
+        return;
+      }
+      
+      const feeds = settings.rssFeeds.split(',').map((s: string) => s.trim()).filter(Boolean);
+      if (!feeds.length) return;
+      
+      const fetchedHeadlines = await fetchRSSSummariesWithLinks(feeds);
+      setHeadlines(fetchedHeadlines);
+      
+      if (fetchedHeadlines.length > 0) {
+        setCurrentHeadline(fetchedHeadlines[0]);
+      }
+    };
+
+    loadRSSFeeds();
+  }, []);
+
+  useEffect(() => {
+    if (headlines.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setOpacity(0);
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % headlines.length);
+        setCurrentHeadline(headlines[(currentIndex + 1) % headlines.length]);
+        setOpacity(1);
+      }, 350);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [headlines, currentIndex]);
+
+  if (!currentHeadline) {
+    return null;
+  }
+
+  return (
+    <div className="p-4 rounded-lg bg-card/50 border border-accent/20">
+      <div 
+        className="text-sm transition-opacity duration-300"
+        style={{ opacity }}
+      >
+        <a 
+          href={currentHeadline.link} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-foreground hover:text-accent font-medium no-underline"
+        >
+          📰 {currentHeadline.title}
+        </a>
+      </div>
+    </div>
+  );
+};

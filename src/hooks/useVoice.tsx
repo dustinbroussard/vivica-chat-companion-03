@@ -3,10 +3,27 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 export type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking';
 
 // TypeScript declarations for Web Speech API
+interface SpeechRecognitionClass {
+  new (): SpeechRecognition;
+}
+
 declare global {
   interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
+    SpeechRecognition: SpeechRecognitionClass;
+    webkitSpeechRecognition: SpeechRecognitionClass;
+  }
+  
+  interface SpeechRecognition extends EventTarget {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    start(): void;
+    stop(): void;
+    abort(): void;
+    onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+    onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
+    onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
+    onend: ((this: SpeechRecognition, ev: Event) => any) | null;
   }
 }
 
@@ -111,7 +128,7 @@ export const useVoice = (): UseVoiceReturn => {
   const setupSpeechRecognition = useCallback(() => {
     if (!isSupported) return;
 
-    const SpeechRecognitionClass = window.SpeechRecognition || (window as unknown as { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
+    const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognitionClass();
     
     recognition.continuous = true;

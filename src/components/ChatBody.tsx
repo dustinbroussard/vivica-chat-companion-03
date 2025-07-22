@@ -2,10 +2,12 @@
 import { forwardRef, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { MessageSquare, Mail, Lightbulb, Brain, Code, RotateCcw, Copy } from "lucide-react";
+import { RotateCcw, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
+import { WeatherWidget } from "@/components/WeatherWidget";
+import { RSSWidget } from "@/components/RSSWidget";
 
 interface Message {
   id: string;
@@ -26,12 +28,11 @@ interface Conversation {
 interface ChatBodyProps {
   conversation: Conversation | null;
   isTyping: boolean;
-  onQuickAction: (prompt: string) => void;
   onRetryMessage?: (messageId: string) => void;
 }
 
 export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
-  ({ conversation, isTyping, onQuickAction, onRetryMessage }, ref) => {
+  ({ conversation, isTyping, onRetryMessage }, ref) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { color, variant } = useTheme();
     const logoSrc = `/logo-${color}${variant}.png`;
@@ -44,28 +45,6 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
       scrollToBottom();
     }, [conversation?.messages, isTyping]);
 
-    const quickActions = [
-      {
-        icon: Mail,
-        label: "Write Email",
-        prompt: "Help me write a professional email",
-      },
-      {
-        icon: Lightbulb,
-        label: "Explain",
-        prompt: "Explain a complex concept",
-      },
-      {
-        icon: Brain,
-        label: "Brainstorm",
-        prompt: "Help me brainstorm ideas",
-      },
-      {
-        icon: Code,
-        label: "Code Review",
-        prompt: "Review my code",
-      },
-    ];
 
     const handleCopyMessage = (content: string) => {
       navigator.clipboard.writeText(content);
@@ -95,18 +74,9 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 w-full max-w-md">
-              {quickActions.map((action) => (
-                <Button
-                  key={action.label}
-                  variant="outline"
-                  onClick={() => onQuickAction(action.prompt)}
-                  className="h-24 flex flex-col items-center gap-3 bg-card/50 hover:bg-accent/10 border-accent/20 hover:border-accent/40 transition-all duration-200"
-                >
-                  <action.icon className="w-6 h-6 text-accent" />
-                  <span className="text-sm font-medium">{action.label}</span>
-                </Button>
-              ))}
+            <div className="grid grid-cols-1 gap-4 w-full max-w-md">
+              <WeatherWidget />
+              <RSSWidget />
             </div>
           </div>
         ) : (

@@ -26,9 +26,6 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
     apiKey1: '',
     apiKey2: '',
     apiKey3: '',
-    googleTtsKey: '',
-    weatherApiKey: '',
-    weatherLocation: '',
     rssFeeds: '',
     includeWeather: false,
     includeRss: false,
@@ -102,24 +99,6 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                 placeholder="Tertiary API Key (Optional)"
                 value={settings.apiKey3}
                 onChange={(e) => setSettings(prev => ({ ...prev, apiKey3: e.target.value }))}
-              />
-              <Input
-                type="password"
-                placeholder="Google TTS API Key (Optional)"
-                value={settings.googleTtsKey}
-                onChange={(e) => setSettings(prev => ({ ...prev, googleTtsKey: e.target.value }))}
-              />
-              <Input
-                type="text"
-                placeholder="OpenWeatherMap API Key (Optional)"
-                value={settings.weatherApiKey}
-                onChange={(e) => setSettings(prev => ({ ...prev, weatherApiKey: e.target.value }))}
-              />
-              <Input
-                type="text"
-                placeholder="Weather location e.g. London"
-                value={settings.weatherLocation}
-                onChange={(e) => setSettings(prev => ({ ...prev, weatherLocation: e.target.value }))}
               />
               <p className="text-sm text-muted-foreground">Your API keys are stored locally and never shared</p>
             </div>
