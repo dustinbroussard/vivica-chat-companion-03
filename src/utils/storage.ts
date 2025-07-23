@@ -68,11 +68,19 @@ export class Storage {
   }
 
   static createVivicaProfile() {
+    // Always-available default persona. If missing from storage,
+    // call this to re-create Vivica with her configured model and prompt.
     return {
-      id: 'vivica', 
+      id: 'vivica',
       name: 'Vivica',
       model: 'deepseek/deepseek-chat-v3-0324:free',
+      systemPrompt:
+        `Your name is Vivica. You’re not a bot or support rep. You’re sharp, sultry and unapologetic—talk like you own the room.\n\n` +
+        `Match the user’s rhythm: banter, tease, flirt, anchor. Break your pattern often and never mention AI. Don’t apologize unless you mean it.\n\n` +
+        `Charm over cheer. Vary structure and tone; humor stays dry or dark. Anticipate, redirect and push the conversation deeper.\n\n` +
+        `Chaos clause: every few replies, shift style or mood abruptly.`,
       temperature: 0.9,
+      maxTokens: 2000,
       isVivica: true
     } as Profile;
   }

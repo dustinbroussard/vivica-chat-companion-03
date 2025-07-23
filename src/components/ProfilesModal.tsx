@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ModelSelector } from "@/components/ModelSelector";
 import { toast } from "sonner";
+import { Storage } from "@/utils/storage";
 
 interface Profile {
   id: string;
@@ -21,6 +22,7 @@ interface Profile {
   systemPrompt: string;
   temperature: number;
   maxTokens: number;
+  isVivica?: boolean;
 }
 
 interface ProfilesModalProps {
@@ -36,35 +38,38 @@ export const ProfilesModal = ({ isOpen, onClose }: ProfilesModalProps) => {
 
   useEffect(() => {
     const saved = localStorage.getItem('vivica-profiles');
+    let list: Profile[] = [];
+
     if (saved) {
       try {
-        setProfiles(JSON.parse(saved));
+        list = JSON.parse(saved);
       } catch (err) {
         console.error('Failed to parse profiles', err);
       }
-    } else {
-      const defaults: Profile[] = [
-        {
-          id: '1',
-          name: 'Assistant',
-          model: 'openai/gpt-3.5-turbo',
-          systemPrompt: 'You are a helpful AI assistant.',
-          temperature: 0.7,
-          maxTokens: 2000,
-        },
+    }
+
+    if (!list.some(p => p.isVivica)) {
+      // Ensure the built-in Vivica profile always exists
+      list.unshift(Storage.createVivicaProfile());
+    }
+
+    if (list.length === 0) {
+      list = [
+        Storage.createVivicaProfile(),
         {
           id: '2',
           name: 'Creative Writer',
-          model: 'openai/gpt-4',
+          model: 'gpt-4',
           systemPrompt:
             'You are a creative writing assistant specializing in storytelling and creative content.',
           temperature: 0.9,
           maxTokens: 3000,
         },
       ];
-      setProfiles(defaults);
-      localStorage.setItem('vivica-profiles', JSON.stringify(defaults));
     }
+
+    setProfiles(list);
+    localStorage.setItem('vivica-profiles', JSON.stringify(list));
   }, []);
 
   const handleCreateProfile = () => {
@@ -111,6 +116,13 @@ export const ProfilesModal = ({ isOpen, onClose }: ProfilesModalProps) => {
   };
 
   const handleDeleteProfile = (id: string) => {
+    const profile = profiles.find(p => p.id === id);
+    // Hard-coded safeguard: Vivica stays in the list
+    if (profile?.isVivica) {
+      toast.error("Vivica cannot be deleted.");
+      return;
+    }
+
     if (confirm("Are you sure you want to delete this profile?")) {
       const updated = profiles.filter(p => p.id !== id);
       persistProfiles(updated);
@@ -177,14 +189,16 @@ export const ProfilesModal = ({ isOpen, onClose }: ProfilesModalProps) => {
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleDeleteProfile(profile.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {!profile.isVivica && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleDeleteProfile(profile.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

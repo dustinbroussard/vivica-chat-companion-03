@@ -11,6 +11,7 @@ interface Profile {
   systemPrompt: string;
   temperature: number;
   maxTokens: number;
+  isVivica?: boolean;
 }
 
 interface ChatHeaderProps {
