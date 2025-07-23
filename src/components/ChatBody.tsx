@@ -147,6 +147,17 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
       });
     };
 
+    /**
+     * Determine if a message should be styled as code.
+     * Treat responses flagged as code or containing common
+     * code block markers as code messages.
+     */
+    const isCodeMessage = (msg: Message) => {
+      if (msg.isCodeResponse) return true;
+      const text = typeof msg.content === 'string' ? msg.content : '';
+      return /```|<code>|<pre>|\bconst\b|\bfunction\b/.test(text);
+    };
+
     return (
       <div
         ref={ref}
@@ -186,11 +197,11 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
                     </span>
                   )}
                   
-                  <div className={`message-bubble ${message.role} ${
-                    message.failed ? 'border-accent/50 bg-accent/10' : ''
-                  } ${message.isCodeResponse ? 'code-bubble' : ''}`}>
-                    {/* TODO(vivica-audit): add CSS for .code-bubble so code responses
-                        stand out from normal messages */}
+                  <div
+                    className={`message-bubble ${message.role} ${
+                      message.failed ? 'border-accent/50 bg-accent/10' : ''
+                    } ${isCodeMessage(message) ? 'code-bubble' : ''}`}
+                  >
                     <div className="prose dark:prose-invert break-words max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {
