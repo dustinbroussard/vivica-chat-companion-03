@@ -10,6 +10,7 @@ import { WeatherWidget } from "@/components/WeatherWidget";
 import { RSSWidget } from "@/components/RSSWidget";
 import { ChatService, ChatMessage } from "@/services/chatService";
 import { Storage } from "@/utils/storage";
+import { getCachedWelcomeMessages, saveWelcomeMessage } from "@/utils/indexedDb";
 
 const getUserName = () => {
   try {
@@ -81,6 +82,12 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
     useEffect(() => {
       const fetchWelcome = async () => {
         if (conversation?.messages.length) return;
+        // Try cached messages first
+        const cached = await getCachedWelcomeMessages();
+        if (cached.length) {
+          setWelcomeMsg(cached[cached.length - 1].text);
+          return;
+        }
         try {
           const raw = localStorage.getItem('vivica-profiles') || '[]';
           const profiles = JSON.parse(raw) as ProfileBrief[];
@@ -103,7 +110,12 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
           });
           const data = await res.json();
           const text = data.choices?.[0]?.message?.content?.trim();
-          setWelcomeMsg(text || 'Well, well. Look who finally showed up.');
+          if (text) {
+            setWelcomeMsg(text);
+            saveWelcomeMessage(text); // Cache for later
+          } else {
+            setWelcomeMsg('Well, well. Look who finally showed up.');
+          }
         } catch {
           // If the call fails (offline, quota, etc.), use a hardcoded snarky line
           setWelcomeMsg('Well, well. Look who finally showed up.');
