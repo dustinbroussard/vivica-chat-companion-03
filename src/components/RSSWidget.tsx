@@ -48,9 +48,10 @@ async function fetchRSSSummariesWithLinks(urls: string[]): Promise<Headline[]> {
 
 interface RSSWidgetProps {
   onSendMessage: (content: string) => void;
+  onNewChat: () => void;
 }
 
-export const RSSWidget = ({ onSendMessage }: RSSWidgetProps) => {
+export const RSSWidget = ({ onSendMessage, onNewChat }: RSSWidgetProps) => {
   const tickerRef = useRef<HTMLDivElement>(null);
   const [currentHeadline, setCurrentHeadline] = useState<Headline | null>(null);
   const [headlines, setHeadlines] = useState<Headline[]>([]);
@@ -134,7 +135,8 @@ export const RSSWidget = ({ onSendMessage }: RSSWidgetProps) => {
       const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(currentHeadline.link)}`);
       const html = await resp.text();
       const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      const messageContent = `News article from ${currentHeadline.source} – ${currentHeadline.title}:\n\n${text}`;
+      const messageContent = `Summarize the following news article in detail and be ready to discuss it.\nSource: ${currentHeadline.source} – ${currentHeadline.title}\n\n${text}`;
+      onNewChat();
       onSendMessage(messageContent);
     } catch (err) {
       console.error('Failed to fetch article', err);

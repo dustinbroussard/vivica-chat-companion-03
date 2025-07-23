@@ -59,10 +59,11 @@ interface ChatBodyProps {
   isTyping: boolean;
   onRetryMessage?: (messageId: string) => void;
   onSendMessage: (content: string) => void;
+  onNewChat: () => void;
 }
 
 export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
-  ({ conversation, isTyping, onRetryMessage, onSendMessage }, ref) => {
+  ({ conversation, isTyping, onRetryMessage, onSendMessage, onNewChat }, ref) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { color, variant } = useTheme();
     const logoSrc = `/logo-${color}${variant}.png`;
@@ -143,7 +144,7 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
 
             <div className="grid grid-cols-1 gap-4 w-full max-w-md">
               <WeatherWidget />
-              <RSSWidget onSendMessage={onSendMessage} />
+              <RSSWidget onSendMessage={onSendMessage} onNewChat={onNewChat} />
             </div>
           </div>
         ) : (
