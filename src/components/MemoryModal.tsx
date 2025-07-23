@@ -73,20 +73,23 @@ export const MemoryModal = ({
   const [memories, setMemories] = useState<MemoryItem[]>([]);
 
   useEffect(() => {
-    const savedMemory = localStorage.getItem('vivica-memory');
+    const profileId = localStorage.getItem('vivica-current-profile') || '';
+    const profileKey = profileId ? `vivica-memory-profile-${profileId}` : '';
+    const profileMem = profileKey ? localStorage.getItem(profileKey) : null;
+    const globalMem = localStorage.getItem('vivica-memory-global');
     const memoryActive = localStorage.getItem('vivica-memory-active');
 
-    if (savedMemory) {
-      setMemory(JSON.parse(savedMemory));
+    const stored = profileMem || globalMem;
+    if (stored) {
+      setMemory(JSON.parse(stored));
     }
-
-    // TODO(vivica-migration): remove legacy fallback once all components
-    // rely on the scoped keys (`vivica-memory-global` and
-    // `vivica-memory-profile-<id>`).
 
     if (memoryActive !== null) {
       setIsActive(JSON.parse(memoryActive));
     }
+
+    // Clean up legacy key from earlier versions
+    localStorage.removeItem('vivica-memory');
   }, []);
 
   const handleDelete = async (entry: {id: string}) => {
@@ -121,11 +124,8 @@ export const MemoryModal = ({
       ? 'vivica-memory-global'
       : `vivica-memory-profile-${profileId}`;
 
-    // Persist under the scoped key and the legacy `vivica-memory` key so
-    // other parts of the app continue to load the latest data.
-    // TODO(vivica-migration): remove legacy key write once migration is complete.
+    // Persist memory under the scoped key
     localStorage.setItem(key, JSON.stringify(saveMemory));
-    localStorage.setItem('vivica-memory', JSON.stringify(saveMemory));
     localStorage.setItem('vivica-memory-active', JSON.stringify(isActive));
     
     toast.success(`Memory saved (${memory.scope} scope)!`);
@@ -146,10 +146,9 @@ export const MemoryModal = ({
       const profileId = localStorage.getItem('vivica-current-profile') || '';
       localStorage.removeItem('vivica-memory-global');
       if (profileId) localStorage.removeItem(`vivica-memory-profile-${profileId}`);
-      localStorage.removeItem('vivica-memory'); // Legacy key - remove after migration
+      localStorage.removeItem('vivica-memory');
       localStorage.removeItem('vivica-memory-active');
       clearAllMemories();
-      // Once migration is complete, the legacy key above can be dropped.
       toast.success("Memory data reset");
     }
   };

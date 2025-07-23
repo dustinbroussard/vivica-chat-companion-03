@@ -20,8 +20,7 @@ const getUserName = () => {
       ? JSON.parse(localStorage.getItem(`vivica-memory-profile-${profileId}`) || 'null')
       : null;
     const globalMem = JSON.parse(localStorage.getItem('vivica-memory-global') || 'null');
-    const legacyMem = JSON.parse(localStorage.getItem('vivica-memory') || 'null');
-    const mem = profileMem || globalMem || legacyMem || {};
+    const mem = profileMem || globalMem || {};
     return mem.identity?.name || 'User';
   } catch {
     return 'User';
