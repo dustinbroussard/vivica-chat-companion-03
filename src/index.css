@@ -55,12 +55,12 @@
     --info: 180 100% 50%;
     --theme-primary: 0 0% 100%;
     --theme-accent: 0 0% 80%;
-    --user-bubble-bg: hsl(var(--primary));
-    --user-bubble-text: hsl(var(--primary-foreground));
+    --user-bubble-bg: hsl(var(--primary-foreground));
+    --user-bubble-text: hsl(var(--primary));
     --user-bubble-border: 1px solid hsl(var(--border-custom));
     /* Reverse colors for the assistant bubble */
-    --assistant-bubble-bg: hsl(var(--primary-foreground));
-    --assistant-bubble-text: hsl(var(--primary));
+    --assistant-bubble-bg: hsl(var(--primary));
+    --assistant-bubble-text: hsl(var(--primary-foreground));
     --assistant-bubble-border: 1px solid hsl(var(--border-custom));
     --gradient-primary: linear-gradient(135deg, hsl(var(--bg-primary)) 0%, hsl(var(--bg-hover)) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(var(--theme-primary)) 0%, hsl(var(--theme-accent)) 100%);
@@ -332,21 +332,21 @@
   --muted-foreground: 120 30% 65%;
   --border: 150 40% 25%;
   --input: 150 40% 12%;
-  --primary: 150 100% 50%;
+  --primary: 150 55% 38%;
   --primary-foreground: 120 100% 95%;
   --secondary: 150 35% 16%;
   --secondary-foreground: 120 100% 95%;
-  --accent: 150 100% 50%;
+  --accent: 150 55% 38%;
   --accent-foreground: 120 100% 95%;
-  --ring: 150 100% 50%;
+  --ring: 150 55% 38%;
   --sidebar-background: 150 50% 6%;
   --sidebar-foreground: 120 100% 95%;
-  --sidebar-primary: 150 100% 50%;
+  --sidebar-primary: 150 55% 38%;
   --sidebar-primary-foreground: 120 100% 95%;
   --sidebar-accent: 150 35% 16%;
   --sidebar-accent-foreground: 120 100% 95%;
   --sidebar-border: 150 40% 25%;
-  --sidebar-ring: 150 100% 50%;
+  --sidebar-ring: 150 55% 38%;
   /* Custom theme variables */
   --bg-primary: 150 100% 4%;
   --bg-secondary: 150 50% 8%;
@@ -356,7 +356,7 @@
   --text-primary: 120 100% 95%;
   --text-secondary: 120 80% 80%;
   --text-muted: 120 30% 65%;
-  --accent-primary: 150 100% 50%;
+  --accent-primary: 150 55% 38%;
   --accent-secondary: 158 64% 52%;
   --border-custom: 150 40% 25%;
   --border-light: 150 40% 30%;
@@ -377,21 +377,21 @@
   --muted-foreground: 150 30% 35%;
   --border: 150 40% 60%;
   --input: 120 40% 80%;
-  --primary: 150 100% 50%;
+  --primary: 150 55% 38%;
   --primary-foreground: 120 100% 95%;
   --secondary: 120 35% 75%;
   --secondary-foreground: 150 100% 4%;
-  --accent: 150 100% 50%;
+  --accent: 150 55% 38%;
   --accent-foreground: 120 100% 95%;
-  --ring: 150 100% 50%;
+  --ring: 150 55% 38%;
   --sidebar-background: 120 50% 85%;
   --sidebar-foreground: 150 100% 4%;
-  --sidebar-primary: 150 100% 50%;
+  --sidebar-primary: 150 55% 38%;
   --sidebar-primary-foreground: 120 100% 95%;
   --sidebar-accent: 120 35% 75%;
   --sidebar-accent-foreground: 150 100% 4%;
   --sidebar-border: 150 40% 60%;
-  --sidebar-ring: 150 100% 50%;
+  --sidebar-ring: 150 55% 38%;
   /* Custom theme variables */
   --bg-primary: 120 100% 95%;
   --bg-secondary: 120 50% 88%;
@@ -401,7 +401,7 @@
   --text-primary: 150 100% 4%;
   --text-secondary: 150 80% 20%;
   --text-muted: 150 30% 35%;
-  --accent-primary: 150 100% 50%;
+  --accent-primary: 150 55% 38%;
   --accent-secondary: 158 64% 52%;
   --border-custom: 150 40% 60%;
   --border-light: 150 40% 65%;
