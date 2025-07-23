@@ -2,7 +2,7 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { RotateCcw, Copy } from "lucide-react";
+import { RotateCcw, Copy, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
@@ -58,12 +58,14 @@ interface ChatBodyProps {
   conversation: Conversation | null;
   isTyping: boolean;
   onRetryMessage?: (messageId: string) => void;
+  onRegenerateMessage?: (messageId: string) => void;
+  onEditMessage?: (message: Message) => void;
   onSendMessage: (content: string) => void;
   onNewChat: () => void;
 }
 
 export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
-  ({ conversation, isTyping, onRetryMessage, onSendMessage, onNewChat }, ref) => {
+  ({ conversation, isTyping, onRetryMessage, onRegenerateMessage, onEditMessage, onSendMessage, onNewChat }, ref) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { color, variant } = useTheme();
     const logoSrc = `/logo-${color}${variant}.png`;
@@ -193,7 +195,39 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
                         >
                           <Copy className="w-3 h-3" />
                         </Button>
-                        
+
+                        {message.role === 'user' && onEditMessage && (
+                          (() => {
+                            const lastIndex = conversation?.messages.length ? conversation.messages.length - 1 : -1;
+                            const isLastUser =
+                              (index === lastIndex && message.role === 'user') ||
+                              (index === lastIndex - 1 && conversation?.messages[lastIndex].role === 'assistant');
+                            return isLastUser ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onEditMessage(message)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </Button>
+                            ) : null;
+                          })()
+                        )}
+
+                        {message.role === 'assistant' && onRegenerateMessage && (
+                          index === conversation?.messages.length - 1 ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onRegenerateMessage(message.id)}
+                              className="h-6 w-6 p-0"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                            </Button>
+                          ) : null
+                        )}
+
                         {message.failed && onRetryMessage && (
                           <Button
                             variant="ghost"

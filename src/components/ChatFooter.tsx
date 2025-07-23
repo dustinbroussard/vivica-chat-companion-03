@@ -8,11 +8,19 @@ interface ChatFooterProps {
   onSendMessage: (message: string) => void;
   onVoiceToggle: () => void;
   isVoiceMode: boolean;
+  editingMessage?: string | null;
 }
 
-export const ChatFooter = ({ onSendMessage, onVoiceToggle, isVoiceMode }: ChatFooterProps) => {
+export const ChatFooter = ({ onSendMessage, onVoiceToggle, isVoiceMode, editingMessage }: ChatFooterProps) => {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (editingMessage !== undefined) {
+      setMessage(editingMessage || "");
+      if (editingMessage) textareaRef.current?.focus();
+    }
+  }, [editingMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +49,9 @@ export const ChatFooter = ({ onSendMessage, onVoiceToggle, isVoiceMode }: ChatFo
   return (
     <footer className="border-t border-border bg-card/50 backdrop-blur-sm p-4">
       <div className="max-w-4xl mx-auto">
+        {editingMessage && (
+          <div className="text-xs text-muted-foreground mb-2">Editing previous message</div>
+        )}
         <form onSubmit={handleSubmit} className="flex items-end gap-3">
           {/* Voice Mode Button */}
           <Button
