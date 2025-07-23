@@ -55,9 +55,9 @@
     --info: 180 100% 50%;
     --theme-primary: 0 0% 100%;
     --theme-accent: 0 0% 80%;
-    --user-bubble-bg: hsl(var(--accent) / 0.15);
-    --user-bubble-text: hsl(var(--accent-foreground));
-    --user-bubble-border: 1px solid hsl(var(--accent) / 0.4);
+    --user-bubble-bg: hsl(var(--primary));
+    --user-bubble-text: hsl(var(--primary-foreground));
+    --user-bubble-border: 1px solid hsl(var(--border-custom));
     --assistant-bubble-bg: hsl(var(--bg-secondary));
     --assistant-bubble-text: hsl(var(--text-primary));
     --assistant-bubble-border: 1px solid hsl(var(--border-custom));
