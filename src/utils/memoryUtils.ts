@@ -16,6 +16,10 @@ interface MemoryItem {
   tags: string[];
 }
 
+// TODO(vivica-audit): these helpers write to IndexedDB but the main chat
+// system only loads memory from localStorage. Integrate DB reads when
+// building the conversation prompt so saved memories actually influence chats.
+
 /**
  * Saves a new memory item with scope control
  * @param content - Memory content text

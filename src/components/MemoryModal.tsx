@@ -75,11 +75,16 @@ export const MemoryModal = ({
   useEffect(() => {
     const savedMemory = localStorage.getItem('vivica-memory');
     const memoryActive = localStorage.getItem('vivica-memory-active');
-    
+
     if (savedMemory) {
       setMemory(JSON.parse(savedMemory));
     }
-    
+
+    // TODO(vivica-audit): support loading per-profile or global memory
+    // from the new keys (`vivica-memory-global` and
+    // `vivica-memory-profile-<id>`). Currently we only read the legacy
+    // `vivica-memory` key so per-profile memory is not restored on reload.
+
     if (memoryActive !== null) {
       setIsActive(JSON.parse(memoryActive));
     }
@@ -113,11 +118,14 @@ export const MemoryModal = ({
       profileId: memory.scope === 'profile' ? profileId : undefined
     };
 
-    const key = memory.scope === 'global' 
+    const key = memory.scope === 'global'
       ? 'vivica-memory-global'
       : `vivica-memory-profile-${profileId}`;
 
+    // Persist under the scoped key and the legacy `vivica-memory` key so
+    // other parts of the app continue to load the latest data.
     localStorage.setItem(key, JSON.stringify(saveMemory));
+    localStorage.setItem('vivica-memory', JSON.stringify(saveMemory));
     localStorage.setItem('vivica-memory-active', JSON.stringify(isActive));
     
     toast.success(`Memory saved (${memory.scope} scope)!`);
@@ -134,6 +142,8 @@ export const MemoryModal = ({
         tags: '',
       };
       setMemory(emptyMemory);
+      // TODO(vivica-audit): also clear persisted memory keys so stale data
+      // isn't loaded next time the app starts.
       toast.success("Memory data reset");
     }
   };
