@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Plus, Search, User, Brain, Settings, MoreVertical, Edit2, Trash2 } from "lucide-react";
+import { X, Plus, Search, User, Brain, Settings, MoreVertical, Edit2, Trash2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/hooks/useTheme";
@@ -29,6 +29,8 @@ interface Conversation {
   messages: Message[];
   lastMessage?: string;
   timestamp: Date;
+  /** Indicates an AI-generated title */
+  autoTitled?: boolean;
 }
 
 interface SidebarProps {
@@ -39,6 +41,8 @@ interface SidebarProps {
   onSelectConversation: (conversation: Conversation) => void;
   onDeleteConversation: (conversationId: string) => void;
   onRenameConversation: (conversationId: string, newTitle: string) => void;
+  /** Regenerate the conversation title via LLM */
+  onGenerateTitle: (conversation: Conversation) => void;
   onNewChat: () => void;
   onOpenSettings: () => void;
   onOpenProfiles: () => void;
@@ -53,6 +57,7 @@ export const Sidebar = ({
   onSelectConversation,
   onDeleteConversation,
   onRenameConversation,
+  onGenerateTitle,
   onNewChat,
   onOpenSettings,
   onOpenProfiles,
@@ -201,6 +206,10 @@ export const Sidebar = ({
                           <DropdownMenuItem onClick={() => handleRename(conversation)}>
                             <Edit2 className="w-4 h-4 mr-2" />
                             Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onGenerateTitle(conversation)}>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Auto Title
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => onDeleteConversation(conversation.id)}
