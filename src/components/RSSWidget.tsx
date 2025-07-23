@@ -1,10 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Storage } from '@/utils/storage';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 interface Headline {
   title: string;
   link: string;
 }
+
+const DEFAULT_FEED = 'https://rss.cnn.com/rss/cnn_us.rss';
+const tickerRef = useRef<HTMLDivElement>(null);
 
 async function fetchRSSSummariesWithLinks(urls: string[]): Promise<Headline[]> {
   const parser = new DOMParser();
@@ -34,23 +40,34 @@ export const RSSWidget = () => {
   const [currentHeadline, setCurrentHeadline] = useState<Headline | null>(null);
   const [headlines, setHeadlines] = useState<Headline[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [opacity, setOpacity] = useState(1);
 
   useEffect(() => {
     const loadRSSFeeds = async () => {
+      setLoading(true);
+      setError('');
       const settings = Storage.get('vivica-settings', { rssFeeds: '' });
-      if (!settings.rssFeeds) {
-        return;
-      }
+      if (!settings.rssFeeds) return;
       
       const feeds = settings.rssFeeds.split(',').map((s: string) => s.trim()).filter(Boolean);
       if (!feeds.length) return;
       
-      const fetchedHeadlines = await fetchRSSSummariesWithLinks(feeds);
-      setHeadlines(fetchedHeadlines);
-      
-      if (fetchedHeadlines.length > 0) {
-        setCurrentHeadline(fetchedHeadlines[0]);
+      try {
+        const fetchedHeadlines = await fetchRSSSummariesWithLinks(feeds);
+        setHeadlines(fetchedHeadlines);
+        
+        if (fetchedHeadlines.length > 0) {
+          setCurrentHeadline(fetchedHeadlines[0]);
+        } else {
+          setError('No headlines found');
+        }
+      } catch (err) {
+        console.error('Failed to load RSS feeds:', err);
+        setError('Failed to load news feed');
+      } finally {
+        setLoading(false);
       }
     };
 
