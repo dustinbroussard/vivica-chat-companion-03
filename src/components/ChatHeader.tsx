@@ -1,5 +1,5 @@
 
-import { Menu, Sun, Moon, Bookmark } from "lucide-react";
+import { Menu, Sun, Moon, Bookmark, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileSwitcher } from "./ProfileSwitcher";
 import { useTheme } from "@/hooks/useTheme";
@@ -22,6 +22,8 @@ interface ChatHeaderProps {
   onProfileChange: (profile: Profile) => void;
   onOpenProfiles: () => void;
   onSaveSummary: () => void;
+  /** Manually regenerate the conversation title */
+  onGenerateTitle: () => void;
 }
 
 export const ChatHeader = ({
@@ -29,7 +31,8 @@ export const ChatHeader = ({
   currentProfile,
   onProfileChange,
   onOpenProfiles,
-  onSaveSummary
+  onSaveSummary,
+  onGenerateTitle
 }: ChatHeaderProps) => {
   const { variant, setVariant } = useTheme();
 
@@ -68,6 +71,15 @@ export const ChatHeader = ({
           title="Save & Summarize conversation"
         >
           <Bookmark className="w-4 h-4" />
+        </Button>
+        {/* Generate a witty title for this chat */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onGenerateTitle}
+          title="Regenerate title"
+        >
+          <Sparkles className="w-4 h-4" />
         </Button>
         <Button variant="ghost" size="icon" onClick={toggleVariant}>
           {variant === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
