@@ -189,7 +189,7 @@ export const Sidebar = ({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
+                            className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreVertical className="w-3 h-3" />
