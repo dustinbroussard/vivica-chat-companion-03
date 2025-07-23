@@ -11,7 +11,6 @@ interface Headline {
 }
 
 const DEFAULT_FEED = 'https://rss.cnn.com/rss/cnn_us.rss';
-const tickerRef = useRef<HTMLDivElement>(null);
 
 async function fetchRSSSummariesWithLinks(urls: string[]): Promise<Headline[]> {
   const parser = new DOMParser();
@@ -48,6 +47,7 @@ async function fetchRSSSummariesWithLinks(urls: string[]): Promise<Headline[]> {
 }
 
 export const RSSWidget = () => {
+  const tickerRef = useRef<HTMLDivElement>(null);
   const [currentHeadline, setCurrentHeadline] = useState<Headline | null>(null);
   const [headlines, setHeadlines] = useState<Headline[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
