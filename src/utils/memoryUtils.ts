@@ -1,4 +1,5 @@
 import { MemoryStorage } from "@/js/voice-mode";
+import { ChatMessage } from "@/services/chatService";
 import { toast } from "sonner";
 
 /**
@@ -8,7 +9,14 @@ import { toast } from "sonner";
  * @param apiKey OpenRouter API key
  * @returns Promise resolving when memory is saved
  */
-export async function saveConversationMemory(messages: ChatMessage[], model: string, apiKey: string) {
+/**
+ * Saves a conversation summary to memory storage
+ * @param messages - Array of chat messages to summarize
+ * @param model - Model name to use for summarization
+ * @param apiKey - API key for LLM calls
+ * @returns Promise with the saved memory data
+ */
+export async function saveConversationMemory(messages: ChatMessage[], model: string, apiKey: string): Promise<{id: string, content: string}> {
   // Build prompt focusing on concise summary and key facts
   const prompt = `
   As Vivica, summarize this conversation in 1-2 sentences while maintaining my helpful tone.

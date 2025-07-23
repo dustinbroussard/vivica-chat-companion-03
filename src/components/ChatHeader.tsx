@@ -1,5 +1,5 @@
 
-import { Menu, Sun, Moon } from "lucide-react";
+import { Menu, Sun, Moon, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileSwitcher } from "./ProfileSwitcher";
 import { useTheme } from "@/hooks/useTheme";
@@ -25,7 +25,8 @@ export const ChatHeader = ({
   onMenuToggle,
   currentProfile,
   onProfileChange,
-  onOpenProfiles
+  onOpenProfiles,
+  onSaveSummary: () => void
 }: ChatHeaderProps) => {
   const { color, variant, setVariant } = useTheme();
 
@@ -59,6 +60,14 @@ export const ChatHeader = ({
       </div>
 
       <div className="flex items-center gap-3">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onSaveSummary}
+          title="Save & Summarize conversation"
+        >
+          <Bookmark className="w-4 h-4" />
+        </Button>
         <Button variant="ghost" size="icon" onClick={toggleVariant}>
           {variant === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </Button>

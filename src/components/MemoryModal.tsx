@@ -31,12 +31,28 @@ interface MemoryData {
   tags: string;
 }
 
+interface MemoryItem {
+  id: string;
+  content: string;
+  createdAt: string;
+  tags: string[];
+}
+
 interface MemoryModalProps {
   isOpen: boolean;
   onClose: () => void;
+  memories: MemoryItem[];
+  onDeleteMemory: (id: string) => void;
+  onEditMemory: (id: string, newContent: string) => void;
 }
 
-export const MemoryModal = ({ isOpen, onClose }: MemoryModalProps) => {
+export const MemoryModal = ({ 
+  isOpen, 
+  onClose,
+  memories,
+  onDeleteMemory,
+  onEditMemory
+}: MemoryModalProps) => {
   const [memory, setMemory] = useState<MemoryData>({
     identity: {
       name: '',
