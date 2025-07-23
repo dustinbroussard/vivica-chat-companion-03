@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Plus, Search, User, Brain, Settings, MoreVertical, Edit2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useTheme } from "@/hooks/useTheme";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,6 +63,9 @@ export const Sidebar = ({
   const [renamingConversation, setRenamingConversation] = useState<Conversation | null>(null);
   const [newTitle, setNewTitle] = useState("");
 
+  const { color, variant } = useTheme();
+  const logoSrc = `/logo-${color}${variant}.png`;
+
   const filteredConversations = conversations.filter(conv =>
     conv.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     conv.lastMessage?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -116,9 +120,7 @@ export const Sidebar = ({
           <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center font-bold">
-                  V
-                </div>
+                <img src={logoSrc} alt="Vivica" className="w-8 h-8" />
                 <span className="font-semibold">Vivica</span>
               </div>
               <Button
