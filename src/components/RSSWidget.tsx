@@ -2,11 +2,12 @@ import { useEffect, useState, useRef } from 'react';
 import { Storage } from '@/utils/storage';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ExternalLink } from 'lucide-react';
 
 interface Headline {
   title: string;
   link: string;
+  source?: string;
 }
 
 const DEFAULT_FEED = 'https://rss.cnn.com/rss/cnn_us.rss';
@@ -20,20 +21,30 @@ async function fetchRSSSummariesWithLinks(urls: string[]): Promise<Headline[]> {
     try {
       const resp = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
       const data = await resp.json();
+      if (!data.contents) continue;
+      
       const doc = parser.parseFromString(data.contents, 'text/xml');
-      const item = doc.querySelector('item');
-      if (item) {
+      const items = doc.querySelectorAll('item');
+      
+      const domain = new URL(url).hostname.replace('www.', '');
+      
+      for (const item of items) {
         const title = item.querySelector('title')?.textContent?.trim();
         const link = item.querySelector('link')?.textContent?.trim();
         if (title && link) {
-          headlines.push({ title, link });
+          headlines.push({ 
+            title, 
+            link,
+            source: domain
+          });
         }
       }
     } catch (err) {
       console.debug('Failed to fetch RSS feed:', url, err);
+      continue;
     }
   }
-  return headlines;
+  return headlines.slice(0, 20); // Limit to 20 headlines
 }
 
 export const RSSWidget = () => {
@@ -93,20 +104,34 @@ export const RSSWidget = () => {
     return null;
   }
 
+  const handleHeadlineClick = () => {
+    if (currentHeadline.link.startsWith('http')) {
+      toast.message('Opening news story', {
+        description: currentHeadline.title,
+        action: {
+          label: 'View',
+          onClick: () => window.open(currentHeadline.link, '_blank')
+        },
+      });
+    } else {
+      toast.warning('Invalid news link');
+    }
+  };
+
   return (
-    <div className="p-4 rounded-lg bg-card/50 border border-accent/20">
-      <div 
-        className="text-sm transition-opacity duration-300"
-        style={{ opacity }}
-      >
-        <a 
-          href={currentHeadline.link} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-foreground hover:text-accent font-medium no-underline"
+    <div className="group relative p-4 rounded-lg bg-card/50 border border-border hover:border-accent/30 transition-colors">
+      <div className="text-sm transition-opacity duration-300" style={{ opacity }}>
+        <Button
+          variant="ghost"
+          className="w-full h-auto p-0 text-foreground hover:text-accent justify-start gap-2"
+          onClick={handleHeadlineClick}
         >
-          📰 {currentHeadline.title}
-        </a>
+          <span className="shrink-0">📰</span>
+          <span className="truncate text-left">{currentHeadline.title}</span>
+          {currentHeadline.link.startsWith('http') && (
+            <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-70 ml-auto" />
+          )}
+        </Button>
       </div>
     </div>
   );
