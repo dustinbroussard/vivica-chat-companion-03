@@ -348,6 +348,49 @@ export const MemoryModal = ({
             </div>
           )}
 
+          {/* Memory List */}
+          {memories.length > 0 && (
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">Saved Memories</Label>
+              <div className="space-y-3">
+                {memories.map((memory) => (
+                  <div key={memory.id} className="p-3 bg-muted/10 rounded-lg border border-border">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-2">
+                        <div className="text-sm whitespace-pre-line">{memory.content}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(memory.createdAt).toLocaleString()}
+                          {memory.tags?.length > 0 && (
+                            <span className="ml-2">
+                              {memory.tags.map(tag => `#${tag}`).join(', ')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          onClick={() => onEditMemory(memory.id, memory.content)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => onDeleteMemory(memory.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Import/Export */}
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleExport} size="sm">

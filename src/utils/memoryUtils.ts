@@ -51,19 +51,27 @@ export async function saveConversationMemory(messages: ChatMessage[], model: str
     });
 
     const data = await response.json();
-    const summary = data.choices?.[0]?.message?.content;
+    const summary = data.choices?.[0]?.message?.content?.trim();
 
-    if (summary) {
-      await MemoryStorage.addMemory({
-        id: Date.now().toString(),
-        content: summary,
-        createdAt: new Date().toISOString(),
-        tags: ['auto-summary']
-      });
-      toast.success("Conversation saved to memory!");
-    } else {
+    if (!summary) {
       throw new Error('No summary generated');
     }
+
+    // Clean up the response if it has bullet points
+    const cleanedSummary = summary
+      .replace(/^- /mg, '• ') // Convert hyphens to bullets
+      .replace(/\n\s*\n/g, '\n\n'); // Normalize spacing
+
+    const memoryData = {
+      id: `memory-${Date.now()}`,
+      content: cleanedSummary,
+      createdAt: new Date().toISOString(),
+      tags: ['auto-summary']
+    };
+
+    await MemoryStorage.addMemory(memoryData);
+    toast.success("Conversation saved to memory!");
+    return memoryData;
   } catch (error) {
     console.error('Failed to save memory:', error);
     toast.error("Failed to save summary");
