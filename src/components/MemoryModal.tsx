@@ -73,6 +73,7 @@ export const MemoryModal = ({
   });
 
   const [isActive, setIsActive] = useState(true);
+  const [scopeFilter, setScopeFilter] = useState<'all'|'global'|'profile'>('all');
 
   useEffect(() => {
     const savedMemory = localStorage.getItem('vivica-memory');
@@ -204,9 +205,36 @@ export const MemoryModal = ({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Memory Toggle */}
-          <div className="flex items-center justify-between">
-            <Label className="text-base font-semibold">Enable Memory</Label>
+          {/* Memory Scope Filter */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-2">
+              <Label className="text-base font-semibold">Filter Memories</Label>
+              <div className="flex gap-2">
+                <Button
+                  variant={scopeFilter === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setScopeFilter('all')}
+                >
+                  All
+                </Button>
+                <Button
+                  variant={scopeFilter === 'global' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setScopeFilter('global')}
+                >
+                  Global
+                </Button>
+                <Button
+                  variant={scopeFilter === 'profile' ? 'default' : 'outline'}
+                  size="sm" 
+                  onClick={() => setScopeFilter('profile')}
+                >
+                  Current Profile
+                </Button>
+              </div>
+            </div>
+            <div>
+              <Label className="text-base font-semibold">Enable Memory</Label>
             <Button
               variant={isActive ? "default" : "outline"}
               size="sm"
@@ -366,12 +394,19 @@ export const MemoryModal = ({
             <div className="space-y-4">
               <Label className="text-base font-semibold">Saved Memories</Label>
               <div className="space-y-3">
-                {memories.map((memory) => (
+                {memories.filter(memory => {
+                  if (scopeFilter === 'all') return true;
+                  if (scopeFilter === 'global') return memory.scope === 'global';
+                  return memory.scope === 'profile' && memory.profileId === currentProfileId;
+                }).map((memory) => (
                   <div key={memory.id} className="p-3 bg-muted/10 rounded-lg border border-border">
                     <div className="flex justify-between items-start">
                       <div className="space-y-2">
                         <div className="text-sm whitespace-pre-line">{memory.content}</div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs text-muted-foreground flex items-center gap-2">
+                          <span className={`inline-block w-2 h-2 rounded-full ${
+                            memory.scope === 'global' ? 'bg-blue-500' : 'bg-purple-500'  
+                          }`} title={memory.scope === 'global' ? 'Global memory' : 'Profile memory'}/>
                           {new Date(memory.createdAt).toLocaleString()}
                           {memory.tags?.length > 0 && (
                             <span className="ml-2">
@@ -384,7 +419,10 @@ export const MemoryModal = ({
                         <Button
                           variant="ghost"
                           size="xs"
-                          onClick={() => onEditMemory(memory.id, memory.content)}
+                          onClick={() => onEditMemory({
+                            ...memory,
+                            ...(memory.scope === 'profile' && {profileId: currentProfileId}) 
+                          })}
                         >
                           Edit
                         </Button>
@@ -392,7 +430,11 @@ export const MemoryModal = ({
                           variant="ghost"
                           size="xs"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => onDeleteMemory(memory.id)}
+                          onClick={() => onDeleteMemory({
+                            id: memory.id,
+                            scope: memory.scope,
+                            ...(memory.scope === 'profile' && {profileId: currentProfileId})
+                          })}
                         >
                           Delete
                         </Button>
