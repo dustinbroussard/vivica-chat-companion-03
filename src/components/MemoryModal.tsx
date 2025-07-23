@@ -193,7 +193,7 @@ export const MemoryModal = ({
   };
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] bg-card border-border max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -234,16 +234,17 @@ export const MemoryModal = ({
                 </Button>
               </div>
             </div>
-            <div>
+            <div className="space-y-2">
               <Label className="text-base font-semibold">Enable Memory</Label>
-            <Button
-              variant={isActive ? "default" : "outline"}
-              size="sm"
-              onClick={() => setIsActive(!isActive)}
-              className={isActive ? "bg-accent hover:bg-accent/90" : ""}
-            >
-              {isActive ? "Active" : "Inactive"}
-            </Button>
+              <Button
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                onClick={() => setIsActive(!isActive)}
+                className={isActive ? "bg-accent hover:bg-accent/90" : ""}
+              >
+                {isActive ? "Active" : "Inactive"}
+              </Button>
+            </div>
           </div>
 
           <Separator />
