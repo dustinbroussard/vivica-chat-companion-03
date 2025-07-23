@@ -1,4 +1,5 @@
 
+import { toast } from "@/components/ui/sonner";
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;

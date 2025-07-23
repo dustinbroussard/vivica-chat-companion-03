@@ -19,6 +19,7 @@ interface Profile {
   id: string;
   name: string;
   model: string;
+  codeModel?: string;
   systemPrompt: string;
   temperature: number;
   maxTokens: number;
@@ -77,6 +78,7 @@ export const ProfilesModal = ({ isOpen, onClose }: ProfilesModalProps) => {
       id: Date.now().toString(),
       name: '',
       model: 'openai/gpt-3.5-turbo',
+      codeModel: 'qwen/qwen-2.5-coder-32b-instruct:free',
       systemPrompt: '',
       temperature: 0.7,
       maxTokens: 2000,
@@ -228,6 +230,17 @@ export const ProfilesModal = ({ isOpen, onClose }: ProfilesModalProps) => {
                   setEditingProfile(prev => prev ? { ...prev, model: value } : null)
                 }
                 placeholder="Select an AI model"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="codeModel">Coding Model</Label>
+              <ModelSelector
+                value={editingProfile?.codeModel || ''}
+                onValueChange={(value) =>
+                  setEditingProfile(prev => prev ? { ...prev, codeModel: value } : null)
+                }
+                placeholder="Select a coding model"
               />
             </div>
 

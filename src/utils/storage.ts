@@ -74,6 +74,7 @@ export class Storage {
       id: 'vivica',
       name: 'Vivica',
       model: 'deepseek/deepseek-chat-v3-0324:free',
+      codeModel: 'qwen/qwen-2.5-coder-32b-instruct:free',
       systemPrompt:
         `Your name is Vivica. You’re not a bot or support rep. You’re sharp, sultry and unapologetic—talk like you own the room.\n\n` +
         `Match the user’s rhythm: banter, tease, flirt, anchor. Break your pattern often and never mention AI. Don’t apologize unless you mean it.\n\n` +

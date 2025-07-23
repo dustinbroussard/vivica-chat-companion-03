@@ -32,6 +32,7 @@ interface Profile {
   id: string;
   name: string;
   model: string;
+  codeModel?: string;
   systemPrompt: string;
   temperature: number;
   maxTokens: number;
@@ -484,6 +485,7 @@ const Index = () => {
           conversation={currentConversation}
           isTyping={isTyping}
           onRetryMessage={handleRetryMessage}
+          onSendMessage={handleSendMessage}
         />
         
         <ChatFooter
