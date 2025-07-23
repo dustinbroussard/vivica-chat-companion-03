@@ -106,13 +106,8 @@ export const RSSWidget = () => {
 
   const handleHeadlineClick = () => {
     if (currentHeadline.link.startsWith('http')) {
-      toast.message('Opening news story', {
-        description: currentHeadline.title,
-        action: {
-          label: 'View',
-          onClick: () => window.open(currentHeadline.link, '_blank')
-        },
-      });
+      const messageContent = `Here's the news article I'm reading about “${currentHeadline.title}”. Please analyze and summarize it for me nicely.`;
+      handleSendMessage(messageContent);
     } else {
       toast.warning('Invalid news link');
     }

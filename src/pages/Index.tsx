@@ -69,10 +69,10 @@ const Index = () => {
       const defaultProfiles: Profile[] = [
         {
           id: '1',
-          name: 'Assistant',
-          model: 'gpt-3.5-turbo',
+          name: 'Vivica',
+          model: 'deepseek/deepseek-chat-v3-0324:free',
           systemPrompt: 'You are a helpful AI assistant.',
-          temperature: 0.7,
+          temperature: 0.9,
           maxTokens: 2000,
         },
         {
