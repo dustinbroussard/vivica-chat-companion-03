@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ProfileSelectionModal } from "./ProfileSelectionModal";
+import { Storage } from "@/utils/storage";
 
 interface Profile {
   id: string;
@@ -11,6 +12,7 @@ interface Profile {
   systemPrompt: string;
   temperature: number;
   maxTokens: number;
+  isVivica?: boolean;
 }
 
 interface ProfileSwitcherProps {
@@ -29,15 +31,23 @@ export const ProfileSwitcher = ({
 
   const loadProfiles = () => {
     const savedProfiles = localStorage.getItem('vivica-profiles');
+    let list: Profile[] = [];
+
     if (savedProfiles) {
       try {
-        setProfiles(JSON.parse(savedProfiles));
+        list = JSON.parse(savedProfiles);
       } catch {
-        setProfiles([]);
+        list = [];
       }
-    } else {
-      setProfiles([]);
     }
+
+    if (!list.some(p => p.isVivica)) {
+      // Auto-recreate Vivica if missing
+      list.unshift(Storage.createVivicaProfile());
+      localStorage.setItem('vivica-profiles', JSON.stringify(list));
+    }
+
+    setProfiles(list);
   };
 
   useEffect(() => {

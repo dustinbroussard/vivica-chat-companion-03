@@ -9,6 +9,7 @@ import { ProfilesModal } from "@/components/ProfilesModal";
 import { MemoryModal } from "@/components/MemoryModal";
 import { toast } from "sonner";
 import { ChatService, ChatMessage } from "@/services/chatService";
+import { Storage } from "@/utils/storage";
 
 interface Message {
   id: string;
@@ -34,6 +35,7 @@ interface Profile {
   systemPrompt: string;
   temperature: number;
   maxTokens: number;
+  isVivica?: boolean;
   [key: string]: unknown; // Add index signature for console.log compatibility
 }
 
@@ -65,35 +67,57 @@ const Index = () => {
 
   const initializeProfiles = () => {
     const savedProfiles = localStorage.getItem('vivica-profiles');
-    if (!savedProfiles) {
-      const defaultProfiles: Profile[] = [
-        {
-          id: '1',
-          name: 'Vivica',
-          model: 'deepseek/deepseek-chat-v3-0324:free',
-          systemPrompt: 'You are a helpful AI assistant.',
-          temperature: 0.9,
-          maxTokens: 2000,
-        },
+
+    let profiles: Profile[] = [];
+    if (savedProfiles) {
+      try {
+        profiles = JSON.parse(savedProfiles);
+      } catch {
+        profiles = [];
+      }
+    }
+
+    const hasVivica = profiles.some((p) => p.isVivica);
+    if (!hasVivica) {
+      // Re-add Vivica if she was removed from storage
+      profiles.unshift(Storage.createVivicaProfile());
+    }
+
+    if (profiles.length === 0) {
+      profiles = [
+        Storage.createVivicaProfile(),
         {
           id: '2',
           name: 'Creative Writer',
           model: 'gpt-4',
-          systemPrompt: 'You are a creative writing assistant specializing in storytelling and creative content.',
+          systemPrompt:
+            'You are a creative writing assistant specializing in storytelling and creative content.',
           temperature: 0.9,
           maxTokens: 3000,
         },
       ];
-      localStorage.setItem('vivica-profiles', JSON.stringify(defaultProfiles));
     }
+
+    localStorage.setItem('vivica-profiles', JSON.stringify(profiles));
   };
 
   const loadCurrentProfile = () => {
     const savedProfileId = localStorage.getItem('vivica-current-profile');
     const savedProfiles = localStorage.getItem('vivica-profiles');
-    
+
     if (savedProfiles) {
-      const profiles: Profile[] = JSON.parse(savedProfiles);
+      let profiles: Profile[] = [];
+      try {
+        profiles = JSON.parse(savedProfiles);
+      } catch {
+        profiles = [];
+      }
+
+      if (!profiles.some(p => p.isVivica)) {
+        // Ensure Vivica always exists
+        profiles.unshift(Storage.createVivicaProfile());
+        localStorage.setItem('vivica-profiles', JSON.stringify(profiles));
+      }
       if (savedProfileId) {
         const profile = profiles.find(p => p.id === savedProfileId);
         if (profile) {
