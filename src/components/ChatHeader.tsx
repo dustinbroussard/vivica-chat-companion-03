@@ -31,13 +31,12 @@ export const ChatHeader = ({
   onOpenProfiles,
   onSaveSummary
 }: ChatHeaderProps) => {
-  const { color, variant, setVariant } = useTheme();
+  const { variant, setVariant } = useTheme();
 
   const toggleVariant = () => {
     setVariant(variant === 'dark' ? 'light' : 'dark');
   };
 
-  const logoSrc = `/logo-${color}${variant}.png`;
   return (
     <div className="flex items-center justify-between p-4 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
       <div className="flex items-center gap-3">
@@ -49,8 +48,6 @@ export const ChatHeader = ({
         >
           <Menu className="w-5 h-5" />
         </Button>
-
-        <img src={logoSrc} alt="Vivica" className="h-8 w-8" />
 
         <div className="flex items-center gap-3">
           <ProfileSwitcher
