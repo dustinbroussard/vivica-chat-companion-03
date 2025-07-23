@@ -1,5 +1,5 @@
 
-import { forwardRef, useEffect, useRef } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { RotateCcw, Copy } from "lucide-react";
@@ -8,6 +8,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { RSSWidget } from "@/components/RSSWidget";
+import { ChatService, ChatMessage } from "@/services/chatService";
+import { Storage } from "@/utils/storage";
 
 const getUserName = () => {
   try {
@@ -45,6 +47,13 @@ interface Conversation {
   timestamp: Date;
 }
 
+interface ProfileBrief {
+  isVivica?: boolean;
+  model: string;
+  systemPrompt: string;
+  temperature: number;
+}
+
 interface ChatBodyProps {
   conversation: Conversation | null;
   isTyping: boolean;
@@ -57,6 +66,7 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { color, variant } = useTheme();
     const logoSrc = `/logo-${color}${variant}.png`;
+    const [welcomeMsg, setWelcomeMsg] = useState('');
 
     const scrollToBottom = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -65,6 +75,42 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
     useEffect(() => {
       scrollToBottom();
     }, [conversation?.messages, isTyping]);
+
+    // Fetch a dynamic welcome message from the LLM whenever the welcome screen appears
+    useEffect(() => {
+      const fetchWelcome = async () => {
+        if (conversation?.messages.length) return;
+        try {
+          const raw = localStorage.getItem('vivica-profiles') || '[]';
+          const profiles = JSON.parse(raw) as ProfileBrief[];
+          const vivica = profiles.find(p => p.isVivica) || Storage.createVivicaProfile();
+
+          const apiKey = localStorage.getItem('openrouter-api-key');
+          if (!apiKey) throw new Error('missing api key');
+
+          // Use Vivica's persona/model to generate the opening line
+          const chatService = new ChatService(apiKey);
+          const systemPrompt = vivica.systemPrompt;
+          const prompt = `${systemPrompt}\n\nGive me a single, short, witty, and slightly unpredictable welcome message as Vivica. Make it snarky, playful, or a little challenging, but never mention being an AI. Don’t repeat past responses.`;
+
+          const reqMessages: ChatMessage[] = [{ role: 'system', content: prompt }];
+          const res = await chatService.sendMessage({
+            model: vivica.model,
+            messages: reqMessages,
+            temperature: vivica.temperature,
+            max_tokens: 60,
+          });
+          const data = await res.json();
+          const text = data.choices?.[0]?.message?.content?.trim();
+          setWelcomeMsg(text || 'Well, well. Look who finally showed up.');
+        } catch {
+          // If the call fails (offline, quota, etc.), use a hardcoded snarky line
+          setWelcomeMsg('Well, well. Look who finally showed up.');
+        }
+      };
+
+      fetchWelcome();
+    }, [conversation?.id]);
 
 
     const handleCopyMessage = (content: string) => {
@@ -91,7 +137,7 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
               <img src={logoSrc} alt="Vivica" className="w-32 h-32 mx-auto" />
               <h2 className="text-3xl font-bold">Welcome to Vivica</h2>
               <p className="text-lg text-muted-foreground">
-                Start a new conversation to begin
+                {welcomeMsg || 'Start a new conversation to begin'}
               </p>
             </div>
 
