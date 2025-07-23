@@ -68,6 +68,11 @@ export async function getMemoriesForProfile(profileId?: string) {
   return all.filter(m => (m.scope === 'global') || (m.scope === 'profile' && m.profileId === profileId));
 }
 
+export async function clearAllMemoriesFromDb() {
+  const db = await getDb();
+  await db.clear('memories');
+}
+
 export async function saveWelcomeMessage(text: string) {
   const db = await getDb();
   await db.add('welcomeMessages', { text, createdAt: new Date().toISOString() });

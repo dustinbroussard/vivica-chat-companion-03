@@ -4,7 +4,8 @@ import {
   saveMemoryToDb,
   deleteMemoryFromDb,
   getAllMemoriesFromDb,
-  getMemoriesForProfile
+  getMemoriesForProfile,
+  clearAllMemoriesFromDb
 } from './indexedDb';
 
 interface MemoryItem {
@@ -16,9 +17,9 @@ interface MemoryItem {
   tags: string[];
 }
 
-// TODO(vivica-audit): these helpers write to IndexedDB but the main chat
-// system only loads memory from localStorage. Integrate DB reads when
-// building the conversation prompt so saved memories actually influence chats.
+// Memory helpers for IndexedDB storage. Prompt building now reads from
+// the DB, so these entries fully influence Vivica's replies. Once all
+// components use the new keys, legacy storage support can be removed.
 
 /**
  * Saves a new memory item with scope control
@@ -74,6 +75,11 @@ export async function editMemory(id: string, newContent: string): Promise<Memory
 /** Remove a memory item by id */
 export async function deleteMemory(id: string): Promise<void> {
   await deleteMemoryFromDb(id);
+}
+
+/** Remove all stored memories */
+export async function clearAllMemories(): Promise<void> {
+  await clearAllMemoriesFromDb();
 }
 
 /**

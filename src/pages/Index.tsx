@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { ChatService, ChatMessage } from "@/services/chatService";
 import { Storage } from "@/utils/storage";
 import { fetchRSSHeadlines } from "@/services/rssService";
+import { getMemories } from "@/utils/memoryUtils";
 
 function weatherCodeToText(code: number): string {
   const map: Record<number, string> = {
@@ -220,54 +221,78 @@ const Index = () => {
     toast.success(`Switched to ${profile.name} profile`);
   };
 
-  const getMemoryPrompt = () => {
+  const getMemoryPrompt = async () => {
     const memoryActive = localStorage.getItem('vivica-memory-active');
-    const savedMemory = localStorage.getItem('vivica-memory');
-    
-    if (memoryActive === 'true' && savedMemory) {
-      const memory = JSON.parse(savedMemory);
-      let prompt = "";
-      
+    if (memoryActive !== 'true') return '';
+
+    const profileId = localStorage.getItem('vivica-current-profile') || '';
+    const parts: Record<string, unknown>[] = [];
+
+    // Prefer new scoped keys; fall back to legacy key for older installs
+
+    const globalMem = localStorage.getItem('vivica-memory-global');
+    const profileMem = profileId
+      ? localStorage.getItem(`vivica-memory-profile-${profileId}`)
+      : null;
+    const legacyMem = localStorage.getItem('vivica-memory');
+
+    if (globalMem || profileMem) {
+      if (globalMem) {
+        try { parts.push(JSON.parse(globalMem)); } catch { /* ignore */ }
+      }
+      if (profileMem) {
+        try { parts.push(JSON.parse(profileMem)); } catch { /* ignore */ }
+      }
+    } else if (legacyMem) {
+      try { parts.push(JSON.parse(legacyMem)); } catch { /* ignore */ }
+      // TODO(vivica-migration): remove legacy fallback after migration
+    }
+
+    let prompt = '';
+    for (const memory of parts) {
       if (memory.identity?.name) {
         prompt += `The user's name is ${memory.identity.name}. `;
       }
-      
       if (memory.identity?.pronouns) {
         prompt += `Use ${memory.identity.pronouns} pronouns when referring to the user. `;
       }
-      
       if (memory.identity?.occupation) {
         prompt += `The user works as ${memory.identity.occupation}. `;
       }
-      
       if (memory.identity?.location) {
         prompt += `The user is located in ${memory.identity.location}. `;
       }
-      
       if (memory.personality?.tone) {
         prompt += `Adopt a ${memory.personality.tone} tone when responding. `;
       }
-      
       if (memory.personality?.style) {
         prompt += `Use a ${memory.personality.style} communication style. `;
       }
-      
       if (memory.personality?.interests) {
         prompt += `The user is interested in: ${memory.personality.interests}. `;
       }
-      
       if (memory.customInstructions) {
         prompt += `${memory.customInstructions} `;
       }
-      
       if (memory.systemNotes) {
         prompt += `Additional notes: ${memory.systemNotes}`;
       }
-      
-      return prompt.trim();
     }
-    
-    return '';
+
+    try {
+      const dbMems = await getMemories(profileId, 'all');
+      if (dbMems.length) {
+        const list = dbMems.map(m => `- ${m.content}`).join('\n');
+        prompt += `${prompt ? '\n\n' : ''}Stored Facts:\n${list}`;
+      }
+    } catch (e) {
+      console.warn('Failed to load memories from DB', e);
+    }
+
+    // When the migration is finished and all code paths use the new keys,
+    // this function can drop the legacy logic above.
+
+    return prompt.trim();
   };
 
   const fetchWeatherInfo = async (): Promise<string> => {
@@ -308,7 +333,7 @@ const Index = () => {
 
   const buildSystemPrompt = async () => {
     const profilePrompt = currentProfile?.systemPrompt || 'You are a helpful AI assistant.';
-    const memoryPrompt = getMemoryPrompt();
+    const memoryPrompt = await getMemoryPrompt();
     const settings = Storage.get('vivica-settings', { includeWeather: false, includeRss: false });
 
     let prompt = profilePrompt;

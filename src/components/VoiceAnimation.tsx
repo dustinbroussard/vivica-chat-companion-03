@@ -16,7 +16,7 @@ interface VoiceAnimationProps {
   isVisible: boolean;
   onClose: () => void;
   currentProfile: Record<string, unknown>;
-  getMemoryPrompt: () => string;
+  getMemoryPrompt: () => Promise<string>;
   buildSystemPrompt: () => Promise<string>;
   onSendMessage: (content: string) => void;
 }
