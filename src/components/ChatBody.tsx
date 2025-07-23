@@ -15,7 +15,13 @@ import { getCachedWelcomeMessages, saveWelcomeMessage } from "@/utils/indexedDb"
 
 const getUserName = () => {
   try {
-    const mem = JSON.parse(localStorage.getItem('vivica-memory') || '{}');
+    const profileId = localStorage.getItem('vivica-current-profile') || '';
+    const profileMem = profileId
+      ? JSON.parse(localStorage.getItem(`vivica-memory-profile-${profileId}`) || 'null')
+      : null;
+    const globalMem = JSON.parse(localStorage.getItem('vivica-memory-global') || 'null');
+    const legacyMem = JSON.parse(localStorage.getItem('vivica-memory') || 'null');
+    const mem = profileMem || globalMem || legacyMem || {};
     return mem.identity?.name || 'User';
   } catch {
     return 'User';
