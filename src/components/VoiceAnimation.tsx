@@ -16,7 +16,8 @@ interface VoiceAnimationProps {
   onClose: () => void;
   currentProfile: Record<string, unknown>;
   getMemoryPrompt: () => string;
-  buildSystemPrompt: () => string;
+  buildSystemPrompt: () => Promise<string>;
+  onSendMessage: (content: string) => void;
 }
 
 type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking';
@@ -26,7 +27,8 @@ export const VoiceAnimation = ({
   onClose,
   currentProfile,
   getMemoryPrompt,
-  buildSystemPrompt
+  buildSystemPrompt,
+  onSendMessage
 }: VoiceAnimationProps) => {
   const [voiceState, setVoiceState] = useState<VoiceState>('listening');
   const [unsupported] = useState(false);
@@ -43,13 +45,23 @@ export const VoiceAnimation = ({
     voiceAnimation.setState('listening');
     
     updateVoiceModeConfig({
-      onListenStateChange: voiceAnimation.setState,
-      onVisualizerData: voiceAnimation.updateVolume
+      onListenStateChange: (state) => {
+        voiceAnimation.setState(state);
+        setVoiceState(state);
+      },
+      onVisualizerData: voiceAnimation.updateVolume,
+      onSpeechResult: (text, isFinal) => {
+        if (isFinal) {
+          onSendMessage(text);
+        }
+      }
     });
 
-    initVoiceMode({
-      systemPrompt: buildSystemPrompt(),
-      conversationId: currentProfile.id,
+    buildSystemPrompt().then(prompt => {
+      initVoiceMode({
+        systemPrompt: prompt,
+        conversationId: currentProfile.id,
+      });
     });
 
     return () => {
@@ -115,7 +127,7 @@ export const VoiceAnimation = ({
       {/* Vivica label */}
       <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 text-center">
         <h2 className="text-4xl font-bold text-white tracking-wide mb-2">
-          VIVICA
+          {String(currentProfile?.name || 'Vivica').toUpperCase()}
         </h2>
         <p className={`text-lg ${getStateColor(voiceState)}`}>
           {getStateLabel(voiceState)}

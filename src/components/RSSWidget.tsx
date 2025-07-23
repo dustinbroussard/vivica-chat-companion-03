@@ -18,11 +18,11 @@ async function fetchRSSSummariesWithLinks(urls: string[]): Promise<Headline[]> {
   
   for (const url of urls) {
     try {
-      const resp = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
-      const data = await resp.json();
-      if (!data.contents) continue;
-      
-      const doc = parser.parseFromString(data.contents, 'text/xml');
+      const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+      const data = await resp.text();
+      if (!data) continue;
+
+      const doc = parser.parseFromString(data, 'text/xml');
       const items = doc.querySelectorAll('item');
       
       const domain = new URL(url).hostname.replace('www.', '');
@@ -108,12 +108,21 @@ export const RSSWidget = ({ onSendMessage }: RSSWidgetProps) => {
     return null;
   }
 
-  const handleHeadlineClick = () => {
-    if (currentHeadline.link.startsWith('http')) {
-      const messageContent = `Here's the news article I'm reading about “${currentHeadline.title}”. Please analyze and summarize it for me nicely.`;
-      onSendMessage(messageContent);
-    } else {
+  const handleHeadlineClick = async () => {
+    if (!currentHeadline.link.startsWith('http')) {
       toast.warning('Invalid news link');
+      return;
+    }
+
+    try {
+      const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(currentHeadline.link)}`);
+      const html = await resp.text();
+      const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      const messageContent = `News article from ${currentHeadline.source} – ${currentHeadline.title}:\n\n${text}`;
+      onSendMessage(messageContent);
+    } catch (err) {
+      console.error('Failed to fetch article', err);
+      toast.error('Failed to load article');
     }
   };
 

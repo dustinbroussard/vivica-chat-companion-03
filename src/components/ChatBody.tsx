@@ -9,6 +9,25 @@ import { toast } from "sonner";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { RSSWidget } from "@/components/RSSWidget";
 
+const getUserName = () => {
+  try {
+    const mem = JSON.parse(localStorage.getItem('vivica-memory') || '{}');
+    return mem.identity?.name || 'User';
+  } catch {
+    return 'User';
+  }
+};
+
+const getProfileName = (id?: string) => {
+  try {
+    const list: { id: string; name: string }[] = JSON.parse(localStorage.getItem('vivica-profiles') || '[]');
+    const pid = id || localStorage.getItem('vivica-current-profile');
+    return list.find((p) => p.id === pid)?.name || 'Vivica';
+  } catch {
+    return 'Vivica';
+  }
+};
+
 interface Message {
   id: string;
   content: string;
@@ -93,9 +112,9 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
               >
                 <div className="flex items-start gap-3 max-w-[85%] md:max-w-[70%]">
                   {message.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-sm font-semibold flex-shrink-0">
-                      V
-                    </div>
+                    <span className="mt-1 text-xs font-semibold text-accent-foreground">
+                      {getProfileName(message.profileId)}
+                    </span>
                   )}
                   
                   <div className={`message-bubble ${message.role} ${
@@ -143,9 +162,9 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
                   </div>
                   
                   {message.role === 'user' && (
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-semibold flex-shrink-0">
-                      U
-                    </div>
+                    <span className="mt-1 text-xs font-semibold text-muted-foreground">
+                      {getUserName()}
+                    </span>
                   )}
                 </div>
               </div>
@@ -155,15 +174,15 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
             {isTyping && (
               <div className="flex justify-start slide-up">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-sm font-semibold">
-                    V
-                  </div>
+                  <span className="mt-1 text-xs font-semibold text-accent-foreground">
+                    {getProfileName()}
+                  </span>
                   <div className="message-bubble assistant">
                     <div className="typing-indicator">
                       <div className="typing-dot"></div>
                       <div className="typing-dot"></div>
                       <div className="typing-dot"></div>
-                      <span className="ml-2">Vivica is typing...</span>
+                      <span className="ml-2">{getProfileName()} is typing...</span>
                     </div>
                   </div>
                 </div>
