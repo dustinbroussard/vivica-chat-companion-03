@@ -19,6 +19,7 @@ interface ChatHeaderProps {
   currentProfile: Profile | null;
   onProfileChange: (profile: Profile) => void;
   onOpenProfiles: () => void;
+  onSaveSummary: () => void;
 }
 
 export const ChatHeader = ({
@@ -26,7 +27,7 @@ export const ChatHeader = ({
   currentProfile,
   onProfileChange,
   onOpenProfiles,
-  onSaveSummary: () => void
+  onSaveSummary
 }: ChatHeaderProps) => {
   const { color, variant, setVariant } = useTheme();
 
