@@ -9,6 +9,7 @@ import { ProfilesModal } from "@/components/ProfilesModal";
 import { MemoryModal } from "@/components/MemoryModal";
 import { toast } from "sonner";
 import { ChatService, ChatMessage } from "@/services/chatService";
+import { searchBrave } from "@/services/searchService";
 import { Storage } from "@/utils/storage";
 import { fetchRSSHeadlines } from "@/services/rssService";
 import { getMemories } from "@/utils/memoryUtils";
@@ -378,7 +379,9 @@ const Index = () => {
     const conversation = baseConv || currentConversation;
     if (!conversation || !content.trim() || !currentProfile) return;
 
-    // TODO(vivica-audit): detect /search commands and route to Brave Search API
+
+    // Check for a /search command before routing the message to the LLM
+    const searchMatch = content.trim().match(/^\/search\s+(.*)/i);
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -388,7 +391,7 @@ const Index = () => {
       profileId: currentProfile.id,
     };
 
-    const updatedConversation = {
+    let updatedConversation = {
       ...conversation,
       messages: [...conversation.messages, userMessage],
       lastMessage: content.trim(),
@@ -413,10 +416,58 @@ const Index = () => {
     }
 
     const systemPrompt = await buildSystemPrompt();
-    const chatMessages: ChatMessage[] = [
+    let chatMessages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
       ...updatedConversation.messages.map(m => ({ role: m.role, content: m.content }))
     ];
+
+    // If this is a /search command, fetch results from Brave Search
+    if (searchMatch) {
+      const query = searchMatch[1];
+      const braveKey = localStorage.getItem('braveApiKey');
+      if (!braveKey) {
+        toast.error('Please set your Brave Search API key in Settings.');
+        setIsTyping(false);
+        return;
+      }
+
+      try {
+        const results = await searchBrave(query, braveKey);
+        const formatted = results.map((r, i) => `${i + 1}. **${r.title}**\n${r.description}\n${r.url}`).join('\n\n');
+
+        // Insert the raw search results as a new assistant message
+        const resultsMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: `Search results for "${query}":\n\n${formatted}`,
+          role: 'assistant',
+          timestamp: new Date(),
+          profileId: currentProfile.id,
+        };
+
+        const convWithResults = {
+          ...updatedConversation,
+          messages: [...updatedConversation.messages, resultsMessage],
+          lastMessage: resultsMessage.content,
+          timestamp: new Date(),
+        };
+
+        setCurrentConversation(convWithResults);
+        setConversations(prev => prev.map(conv => conv.id === conversation.id ? convWithResults : conv));
+
+        // Build a prompt asking Vivica to summarize the results
+        chatMessages = [
+          { role: 'system', content: systemPrompt },
+          ...convWithResults.messages.map(m => ({ role: m.role, content: m.content })),
+          { role: 'user', content: 'Summarize or comment on the search results above in your signature style.' }
+        ];
+
+        updatedConversation = convWithResults; // continue with new conversation state
+      } catch (err) {
+        toast.error('Failed to fetch search results.');
+        setIsTyping(false);
+        return;
+      }
+    }
 
     const chatService = new ChatService(apiKey);
 
