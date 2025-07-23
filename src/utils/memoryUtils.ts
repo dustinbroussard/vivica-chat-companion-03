@@ -91,6 +91,7 @@ export async function clearAllMemories(): Promise<void> {
  * @param profileId - Required for profile memories
  * @returns Promise with saved memory data
  */
+// Used by the "Save & Summarize" button in ChatHeader
 export async function saveConversationMemory(
   messages: ChatMessage[], 
   model: string, 

@@ -63,7 +63,7 @@ export const ChatHeader = ({
       </div>
 
       <div className="flex items-center gap-3">
-        {/* TODO(vivica-audit): wire this action to memoryUtils.saveConversationMemory */}
+        {/* Bookmark triggers the Save & Summarize flow */}
         <Button
           variant="ghost"
           size="icon"
