@@ -34,6 +34,13 @@ export const VoiceAnimation = ({
   const [voiceState, setVoiceState] = useState<VoiceState>('listening');
   const [unsupported] = useState(false);
 
+  const handleClose = () => {
+    voiceAnimation.setState('idle');
+    voiceAnimation.hide();
+    stopListening();
+    onClose();
+  };
+
   useEffect(() => {
     if (!isVisible) {
       voiceAnimation.hide();
@@ -110,7 +117,7 @@ export const VoiceAnimation = ({
     <div className="flex items-center justify-center h-full text-center text-white">
       <div>
         <p className="mb-4 text-lg">Voice mode is not supported on this device.</p>
-        <Button onClick={onClose}>Close</Button>
+        <Button onClick={handleClose}>Close</Button>
       </div>
     </div>
   ) : (
@@ -118,7 +125,7 @@ export const VoiceAnimation = ({
       <Button
         variant="ghost"
         size="icon"
-        onClick={onClose}
+        onClick={handleClose}
         className="absolute top-4 right-4 text-white hover:bg-white/20 z-10"
       >
         <X className="w-6 h-6" />

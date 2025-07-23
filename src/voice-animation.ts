@@ -11,6 +11,9 @@ class VoiceAnimation {
     private currentMoodColor: string = '#00FF88';
     private targetMoodColor: string = '#00FF88';
     private pulseOffset: number = 0;
+    // Animation tuning variables
+    private pulseSpeed: number = 0.03;
+    private jitter: number = 0;
     private particles: Particle[] = [];
     private isActive: boolean = false;
 
@@ -38,23 +41,7 @@ class VoiceAnimation {
             display: none;
         `;
 
-        // Create close button
-        const closeBtn = document.createElement('button');
-        closeBtn.innerHTML = '&times;';
-        closeBtn.style.cssText = `
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 32px;
-            cursor: pointer;
-            z-index: 1001;
-        `;
-        closeBtn.addEventListener('click', () => this.hide());
-
-        // Create canvas
+        // Create canvas for drawing the orb
         this.canvas = document.createElement('canvas');
         this.canvas.id = 'voice-canvas';
         this.canvas.style.cssText = `
@@ -65,7 +52,6 @@ class VoiceAnimation {
         `;
 
         this.animationContainer.appendChild(this.canvas);
-        this.animationContainer.appendChild(closeBtn);
         document.body.appendChild(this.animationContainer);
 
         this.ctx = this.canvas.getContext('2d');
@@ -96,28 +82,49 @@ class VoiceAnimation {
 
     hide(): void {
         if (this.animationContainer) {
+            this.setState('idle');
             this.animationContainer.style.display = 'none';
             this.isActive = false;
         }
     }
 
-    setState(state: 'listening' | 'processing' | 'speaking' | 'error'): void {
+    setState(state: 'idle' | 'listening' | 'processing' | 'speaking' | 'error'): void {
+        const accent = this.getAccentColor();
         switch (state) {
+            case 'idle':
+                // Gray color and very slow pulse when idle
+                this.updateMood('#666666');
+                this.targetVolume = 0;
+                this.pulseSpeed = 0.01;
+                this.jitter = 0;
+                break;
             case 'listening':
-                this.updateMood('#00FF88');
+                // Calm blue/teal while listening
+                this.updateMood('#33ccff');
                 this.targetVolume = 0.2;
+                this.pulseSpeed = 0.02;
+                this.jitter = 0;
                 break;
             case 'processing':
+                // Gold and jittery fast pulse while processing
                 this.updateMood('#FFD700');
                 this.targetVolume = 0.3;
+                this.pulseSpeed = 0.07;
+                this.jitter = 0.5;
                 break;
             case 'speaking':
-                this.updateMood('#FF6B6B');
+                // Use theme accent (fallback magenta) when speaking
+                this.updateMood(accent || '#FF0077');
                 this.targetVolume = 0.5;
+                this.pulseSpeed = 0.04;
+                this.jitter = 0;
                 break;
             case 'error':
+                // Flash red when something goes wrong
                 this.updateMood('#FF4444');
                 this.targetVolume = 0;
+                this.pulseSpeed = 0.03;
+                this.jitter = 0;
                 setTimeout(() => this.setState('listening'), 3000);
                 break;
         }
@@ -134,6 +141,13 @@ class VoiceAnimation {
         }
     }
 
+    // Access accent color from theme if provided
+    private getAccentColor(): string | null {
+        const style = getComputedStyle(document.documentElement);
+        const val = style.getPropertyValue('--accent').trim() || style.getPropertyValue('--theme-accent').trim();
+        return val ? `hsl(${val})` : null;
+    }
+
     private animate(): void {
         if (!this.isActive || !this.ctx || !this.canvas) { // Check for ctx and canvas presence
             requestAnimationFrame(() => this.animate());
@@ -143,7 +157,7 @@ class VoiceAnimation {
         // Smooth transitions
         this.volume += (this.targetVolume - this.volume) * 0.1;
         this.currentMoodColor = this.lerpColor(this.currentMoodColor, this.targetMoodColor, 0.05);
-        this.pulseOffset += 0.03;
+        this.pulseOffset += this.pulseSpeed;
 
         this.drawOrb();
         requestAnimationFrame(() => this.animate());
@@ -156,8 +170,8 @@ class VoiceAnimation {
 
         const baseRadius = Math.min(this.canvas.width, this.canvas.height) * 0.15;
         const radius = baseRadius + this.volume * (baseRadius * 2) + Math.sin(this.pulseOffset) * (baseRadius * 0.2);
-        const x = this.canvas.width / 2;
-        const y = this.canvas.height / 2;
+        const x = this.canvas.width / 2 + (Math.random() - 0.5) * this.jitter * baseRadius;
+        const y = this.canvas.height / 2 + (Math.random() - 0.5) * this.jitter * baseRadius;
 
         // Outer glow
         const outerGlow = this.ctx.createRadialGradient(x, y, radius * 0.3, x, y, radius * 2.5);
