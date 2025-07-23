@@ -422,7 +422,15 @@ export const MemoryModal = ({
                   <div key={entry.id} className="p-3 bg-muted/10 rounded-lg border border-border">
                     <div className="flex justify-between items-start">
                       <div className="space-y-2">
-                        <div className="text-sm whitespace-pre-line">{entry.content}</div>
+                        <div className="text-sm whitespace-pre-line">
+                          {
+                            // Handle cases where content might be an object
+                            typeof entry.content === 'string'
+                              ? entry.content
+                              : (console.log('Non-string memory entry', entry.content),
+                                JSON.stringify(entry.content))
+                          }
+                        </div>
                         <div className="text-xs text-muted-foreground flex items-center gap-2">
                           <span className={`inline-block w-2 h-2 rounded-full ${
                             entry.scope === 'global' ? 'bg-blue-500' : 'bg-purple-500'

@@ -185,7 +185,15 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
                   } ${message.isCodeResponse ? 'code-bubble' : ''}`}>
                     <div className="prose dark:prose-invert break-words max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {message.content}
+                        {
+                          // Avoid rendering raw objects like [object Object]
+                          // If the message content isn't a string, log it and
+                          // fall back to JSON so the UI stays readable
+                          typeof message.content === 'string'
+                            ? message.content
+                            : (console.log('Non-string message', message.content),
+                              JSON.stringify(message.content))
+                        }
                       </ReactMarkdown>
                     </div>
                     
@@ -204,7 +212,13 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleCopyMessage(message.content)}
+                          onClick={() =>
+                            handleCopyMessage(
+                              typeof message.content === 'string'
+                                ? message.content
+                                : JSON.stringify(message.content)
+                            )
+                          }
                           className="h-6 w-6 p-0"
                         >
                           <Copy className="w-3 h-3" />
