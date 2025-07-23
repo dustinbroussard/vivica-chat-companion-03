@@ -40,9 +40,10 @@
 - **Weather Widget:**  
   - Up-to-the-minute local weather in the sidebar/welcome screen.
 
-- **Animated RSS News Ticker:**  
+- **Animated RSS News Ticker:**
   - Scrolls through the latest headlines from your chosen (or default CNN US) RSS feed.
-  - Click a headline to inject it into chat—Vivica will summarize, comment, or roast the news on demand.
+  - Click a headline to inject it into chat—Vivica now fetches the full article via a CORS proxy,
+    cleans it with the Readability algorithm, and then summarizes it with her usual flair.
 
 - **Progressive Web App (PWA):**  
   - Installable on desktop and mobile.
