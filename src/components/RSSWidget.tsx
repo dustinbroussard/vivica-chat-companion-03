@@ -104,6 +104,22 @@ export const RSSWidget = ({ onSendMessage }: RSSWidgetProps) => {
     return () => clearInterval(interval);
   }, [headlines, currentIndex]);
 
+  if (loading) {
+    return (
+      <div className="p-4 rounded-lg bg-card/50 border border-border flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="w-4 h-4 animate-spin" /> Loading news...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 rounded-lg bg-card/50 border border-border text-sm text-muted-foreground">
+        {error}
+      </div>
+    );
+  }
+
   if (!currentHeadline) {
     return null;
   }
