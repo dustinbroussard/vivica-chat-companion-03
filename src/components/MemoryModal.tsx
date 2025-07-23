@@ -52,10 +52,11 @@ interface MemoryModalProps {
 export const MemoryModal = ({ 
   isOpen, 
   onClose,
-  memories,
+  memories = [],
   onDeleteMemory,
   onEditMemory
 }: MemoryModalProps) => {
+  const currentProfileId = localStorage.getItem('vivica-current-profile') || '';
   const [memory, setMemory] = useState<MemoryData>({
     identity: {
       name: '',
@@ -392,7 +393,7 @@ export const MemoryModal = ({
           )}
 
           {/* Memory List */}
-          {memories.length > 0 && (
+          {memories?.length > 0 && (
             <div className="space-y-4">
               <Label className="text-base font-semibold">Saved Memories</Label>
               <div className="space-y-3">
