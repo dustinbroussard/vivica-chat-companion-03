@@ -9,7 +9,44 @@
 
 const isAndroidBridgeAvailable = () => false; // Default to false if bridge not available
 const sendToAndroidLog = (level, tag, message) => console.log(`[${level}/${tag}] ${message}`); // Fallback logging
-import Storage, { PersonaStorage, MemoryStorage, MessageStorage, ConversationStorage } from './storage-wrapper.js';
+
+// Fallback storage implementation since storage-wrapper.js is missing
+const Storage = {
+  get: (key, defaultValue) => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  },
+  set: (key, value) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+};
+
+const PersonaStorage = {
+  getAllPersonas: async () => [],
+  getActivePersona: async () => null
+};
+
+const MemoryStorage = {
+  getAllMemories: async () => []
+};
+
+const MessageStorage = {
+  getMessagesByConversationId: async () => []
+};
+
+const ConversationStorage = {
+  getAllConversations: async () => [],
+  updateConversation: async () => {}
+};
 
 const VOICE_MODE_DEBUG_TAG = 'VoiceMode';
 
