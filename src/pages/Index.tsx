@@ -353,6 +353,8 @@ const Index = () => {
     const conversation = baseConv || currentConversation;
     if (!conversation || !content.trim() || !currentProfile) return;
 
+    // TODO(vivica-audit): detect /search commands and route to Brave Search API
+
     const userMessage: Message = {
       id: Date.now().toString(),
       content: content.trim(),
@@ -414,28 +416,40 @@ const Index = () => {
     ));
 
     try {
+      const isCodeReq = /```|\bcode\b|function|programming/i.test(content);
       const response = await chatService.sendMessage({
         model: currentProfile.model,
         messages: chatMessages,
         temperature: currentProfile.temperature,
         max_tokens: currentProfile.maxTokens,
         stream: true,
+        isCodeRequest: isCodeReq
       });
 
       let fullContent = '';
-      for await (const token of chatService.streamResponse(response)) {
+      let isCodeResp = false;
+      for await (const chunk of chatService.streamResponse(response, { isCodeRequest: isCodeReq })) {
+        if (typeof chunk === 'object' && 'type' in chunk) {
+          // Stream start metadata
+          if (chunk.type === 'stream_start') {
+            isCodeResp = !!chunk.data.isCodeRequest;
+          }
+          continue;
+        }
+
+        const token = typeof chunk === 'string' ? chunk : chunk.content;
         fullContent += token;
         setCurrentConversation(prev => {
           if (!prev) return prev;
           const msgs = prev.messages.map(msg =>
-            msg.id === assistantMessage.id ? { ...msg, content: fullContent } : msg
+            msg.id === assistantMessage.id ? { ...msg, content: fullContent, isCodeResponse: isCodeResp } : msg
           );
           return { ...prev, messages: msgs, lastMessage: fullContent };
         });
         setConversations(prev => prev.map(conv => {
           if (conv.id !== conversation.id) return conv;
           const msgs = conv.messages.map(msg =>
-            msg.id === assistantMessage.id ? { ...msg, content: fullContent } : msg
+            msg.id === assistantMessage.id ? { ...msg, content: fullContent, isCodeResponse: isCodeResp } : msg
           );
           return { ...conv, messages: msgs, lastMessage: fullContent, timestamp: new Date() };
         }));
