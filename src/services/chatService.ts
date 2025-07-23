@@ -20,6 +20,16 @@ export interface ChatRequest {
   };
 }
 
+export interface StreamStart {
+  type: 'stream_start';
+  data: { isCodeRequest?: boolean };
+}
+
+export interface StreamContent {
+  content: string;
+  isCodeRequest?: boolean;
+}
+
 export class ChatService {
   private apiKeyList: string[];
   private baseUrl = 'https://openrouter.ai/api/v1';
@@ -174,11 +184,17 @@ export class ChatService {
     throw new Error(errorMsg);
   }
 
-  async *streamResponse(response: Response, request?: ChatRequest): AsyncGenerator<string | {type: string, data: any}, void, unknown> {
+
+  async *streamResponse(
+    response: Response,
+    request?: ChatRequest
+  ): AsyncGenerator<string | StreamStart | StreamContent, void, unknown> {
     // Yield a signal before starting the stream
-    yield {type: 'stream_start', data: {
-      isCodeResponse: request?.isCodeRequest
-    }};
+    const startSignal: StreamStart = {
+      type: 'stream_start',
+      data: { isCodeRequest: request?.isCodeRequest }
+    };
+    yield startSignal;
     
     const reader = response.body?.getReader();
     if (!reader) {
@@ -208,9 +224,9 @@ export class ChatService {
               const content = parsed.choices?.[0]?.delta?.content;
               if (content) {
                 // If this was a code request, we'll need to send the result to Vivica for summary
-                yield { 
+                yield {
                   content,
-                  isCodeResponse: request.isCodeRequest 
+                  isCodeRequest: request.isCodeRequest
                 };
               }
             } catch (e) {
