@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { RotateCcw, Copy, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FaUser, FaRobot } from "react-icons/fa";
 import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
 import { WeatherWidget } from "@/components/WeatherWidget";
@@ -161,7 +162,8 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
               >
                 <div className="flex items-start gap-3 max-w-[85%] md:max-w-[70%]">
                   {message.role === 'assistant' && (
-                    <span className="mt-1 text-xs font-semibold text-accent-foreground">
+                    <span className="mt-1 flex items-center gap-1 text-xs font-semibold text-primary">
+                      <FaRobot className="w-3 h-3" />
                       {getProfileName(message.profileId)}
                     </span>
                   )}
@@ -169,7 +171,7 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
                   <div className={`message-bubble ${message.role} ${
                     message.failed ? 'border-accent/50 bg-accent/10' : ''
                   } ${message.isCodeResponse ? 'code-bubble' : ''}`}>
-                    <div className="prose prose-invert break-words max-w-none">
+                    <div className="prose dark:prose-invert break-words max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {message.content}
                       </ReactMarkdown>
@@ -243,7 +245,8 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
                   </div>
                   
                   {message.role === 'user' && (
-                    <span className="mt-1 text-xs font-semibold text-muted-foreground">
+                    <span className="mt-1 flex items-center gap-1 text-xs font-semibold text-primary">
+                      <FaUser className="w-3 h-3" />
                       {getUserName()}
                     </span>
                   )}
@@ -255,7 +258,8 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
             {isTyping && (
               <div className="flex justify-start slide-up">
                 <div className="flex items-start gap-3">
-                  <span className="mt-1 text-xs font-semibold text-accent-foreground">
+                  <span className="mt-1 flex items-center gap-1 text-xs font-semibold text-primary">
+                    <FaRobot className="w-3 h-3" />
                     {getProfileName()}
                   </span>
                   <div className="message-bubble assistant">
