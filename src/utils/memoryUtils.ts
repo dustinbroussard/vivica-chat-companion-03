@@ -2,35 +2,107 @@ import { MemoryStorage } from "@/js/voice-mode";
 import { ChatMessage } from "@/services/chatService";
 import { toast } from "sonner";
 
+interface MemoryItem {
+  id: string;
+  content: string;
+  scope: 'global' | 'profile';
+  profileId?: string;
+  createdAt: string;
+  tags: string[];
+}
+
 /**
- * Saves a summarized memory from conversation history
- * @param messages Array of chat messages
- * @param model Current LLM model name 
- * @param apiKey OpenRouter API key
- * @returns Promise resolving when memory is saved
+ * Saves a new memory item with scope control
+ * @param content - Memory content text
+ * @param scope - 'global' or 'profile' scope
+ * @param profileId - Required for profile-scoped memories
+ * @returns Promise with saved memory data
  */
+export async function saveMemory(content: string, scope: 'global' | 'profile', profileId?: string): Promise<MemoryItem> {
+  const memory: MemoryItem = {
+    id: `memory-${Date.now()}`,
+    content,
+    scope,
+    profileId: scope === 'profile' ? profileId : undefined,
+    createdAt: new Date().toISOString(),
+    tags: scope === 'global' ? ['global'] : ['profile']
+  };
+
+  const key = scope === 'global' 
+    ? 'vivica-memory-global' 
+    : `vivica-memory-profile-${profileId}`;
+
+  const existing = JSON.parse(localStorage.getItem(key) || '[]');
+  localStorage.setItem(key, JSON.stringify([...existing, memory]));
+
+  return memory;
+}
+
 /**
- * Saves a conversation summary to memory storage
- * @param messages - Array of chat messages to summarize
- * @param model - Model name to use for summarization
- * @param apiKey - API key for LLM calls
- * @returns Promise with the saved memory data
+ * Gets memories filtered by scope
+ * @param profileId - Required to get profile-specific memories
+ * @param scopeFilter - Optional filter ('global' | 'profile' | 'all')
+ * @returns Filtered array of MemoryItem
  */
-export async function saveConversationMemory(messages: ChatMessage[], model: string, apiKey: string): Promise<{id: string, content: string}> {
-  // Build prompt focusing on concise summary and key facts
-  const prompt = `
-  As Vivica, summarize this conversation in 1-2 sentences while maintaining my helpful tone.
-  Also extract 2-5 key facts, decisions, or names worth remembering.
-  Respond in this format exactly:
+export function getMemories(profileId?: string, scopeFilter?: 'global' | 'profile' | 'all'): MemoryItem[] {
+  const global = JSON.parse(localStorage.getItem('vivica-memory-global') || '[]');
   
-  Summary: [concise summary here]
+  const profile = profileId 
+    ? JSON.parse(localStorage.getItem(`vivica-memory-profile-${profileId}`) || '[]')
+    : [];
+
+  switch (scopeFilter) {
+    case 'global': return global;
+    case 'profile': return profile;
+    default: return [...global, ...profile];
+  }
+}
+
+/**
+ * Saves conversational memory (legacy wrapper)
+ * @param messages - Chat messages to summarize
+ * @param model - Model name for summarization
+ * @param apiKey - API key for LLM calls
+ * @param scope - Memory scope ('global' or 'profile')
+ * @param profileId - Required for profile memories
+ * @returns Promise with saved memory data
+ */
+export async function saveConversationMemory(
+  messages: ChatMessage[], 
+  model: string, 
+  apiKey: string,
+  scope: 'global' | 'profile' = 'global',
+  profileId?: string
+): Promise<MemoryItem> {
+  // Enhanced prompt with scope awareness
+  const scopeHint = scope === 'profile' 
+    ? "This is a persona-specific memory - focus on details relevant to this persona's specialty."
+    : "This is a global memory - keep it broadly applicable to all personas.";
+
+  const prompt = `
+  As Vivica, create a ${scope} memory from this conversation.
+  ${scopeHint}
+  
+  Format requirements:
+  1. Start with "Summary:" followed by 1-2 sentence overview
+  2. List key points as bullets
+  3. Keep professional but friendly tone
+
+  Key Points to Include:
+  - Important facts/names
+  - User preferences
+  - Key decisions
+  - Special instructions
+
+  Conversation:
+  ${messages.map(m => `${m.role}: ${m.content}`).join('\n')}
+
+  Response Format:
+  Summary: [summary here]
   Key Points:
   - [point 1]
   - [point 2]
   - [...]
-
-  Conversation:
-  ${messages.map(m => `${m.role}: ${m.content}`).join('\n')}
   `;
 
   try {
