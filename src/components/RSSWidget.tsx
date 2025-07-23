@@ -3,15 +3,18 @@ import { Storage } from '@/utils/storage';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Loader2, ExternalLink } from 'lucide-react';
+import { fetchArticleText } from '@/services/rssService';
 
 interface Headline {
   title: string;
   link: string;
+  description?: string;
   source?: string;
 }
 
 const DEFAULT_FEED = 'https://rss.cnn.com/rss/cnn_us.rss';
 
+// Fetch RSS feeds via a CORS proxy and return basic info for each item.
 async function fetchRSSSummariesWithLinks(urls: string[]): Promise<Headline[]> {
   const parser = new DOMParser();
   const headlines: Headline[] = [];
@@ -30,10 +33,16 @@ async function fetchRSSSummariesWithLinks(urls: string[]): Promise<Headline[]> {
       for (const item of items) {
         const title = item.querySelector('title')?.textContent?.trim();
         const link = item.querySelector('link')?.textContent?.trim();
+        const descNode = item.querySelector('description');
+        const contentNode = item.querySelector('content\\:encoded');
+        let description = contentNode?.textContent || descNode?.textContent || '';
+        description = description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
         if (title && link) {
-          headlines.push({ 
-            title, 
+          headlines.push({
+            title,
             link,
+            description,
             source: domain
           });
         }
@@ -125,6 +134,8 @@ export const RSSWidget = ({ onSendMessage, onNewChat }: RSSWidgetProps) => {
     return null;
   }
 
+  // When a headline is clicked we grab the full article, clean it up with
+  // Readability, and send the resulting text as a system prompt.
   const handleHeadlineClick = async () => {
     if (!currentHeadline.link.startsWith('http')) {
       toast.warning('Invalid news link');
@@ -132,15 +143,27 @@ export const RSSWidget = ({ onSendMessage, onNewChat }: RSSWidgetProps) => {
     }
 
     try {
-      const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(currentHeadline.link)}`);
-      const html = await resp.text();
-      const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      const messageContent = `Summarize the following news article in detail and be ready to discuss it.\nSource: ${currentHeadline.source} – ${currentHeadline.title}\n\n${text}`;
+      const article = await fetchArticleText(currentHeadline.link);
+      const content = article || currentHeadline.description || '';
+      const messageContent =
+        `Read and summarize the following article. Highlight anything important, and add your own witty take:\n` +
+        `Title: ${currentHeadline.title}\n` +
+        `URL: ${currentHeadline.link}\n` +
+        `Article:\n${content}`;
+
       onNewChat();
       onSendMessage(messageContent);
     } catch (err) {
       console.error('Failed to fetch article', err);
-      toast.error('Failed to load article');
+      const fallback = currentHeadline.description || 'Unable to fetch article.';
+      const messageContent =
+        `Read and summarize the following article. Highlight anything important, and add your own witty take:\n` +
+        `Title: ${currentHeadline.title}\n` +
+        `URL: ${currentHeadline.link}\n` +
+        `Article:\n${fallback}`;
+      onNewChat();
+      onSendMessage(messageContent);
+      toast.error('Failed to load full article, using summary.');
     }
   };
 
