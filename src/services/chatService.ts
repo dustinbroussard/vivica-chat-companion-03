@@ -15,9 +15,48 @@ export interface ChatRequest {
 export class ChatService {
   private apiKey: string;
   private baseUrl = 'https://openrouter.ai/api/v1';
+  private telemetry = {
+    keyUsage: {} as Record<string, {success: number, failures: number}>,
+    lastUsedKey: '',
+  };
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
+    this.initKeyTelemetry();
+  }
+
+  private initKeyTelemetry() {
+    const saved = localStorage.getItem('vivica-key-telemetry');
+    if (saved) {
+      try {
+        this.telemetry = JSON.parse(saved);
+      } catch (e) {
+        console.warn('Failed to load key telemetry', e);
+      }
+    }
+  }
+
+  private saveKeyTelemetry() {
+    localStorage.setItem(
+      'vivica-key-telemetry', 
+      JSON.stringify(this.telemetry)
+    );
+  }
+
+  private trackKeyUsage(key: string, success: boolean) {
+    const shortKey = key.slice(-4);
+    if (!this.telemetry.keyUsage[shortKey]) {
+      this.telemetry.keyUsage[shortKey] = {success: 0, failures: 0};
+    }
+    
+    if (success) {
+      this.telemetry.keyUsage[shortKey].success++;
+      this.telemetry.lastUsedKey = shortKey;
+    } else {
+      this.telemetry.keyUsage[shortKey].failures++;
+    }
+    
+    this.saveKeyTelemetry();
   }
 
   private async trySendWithKey(request: ChatRequest, apiKey: string): Promise<Response> {
@@ -63,15 +102,30 @@ export class ChatService {
     }
 
     let lastError: Error | null = null;
+
+    // Only show visual feedback if we have multiple keys to try
+    const showRetryFeedback = keys.length > 1;
     
     // Try each key in order until one succeeds
     for (const [index, key] of keys.entries()) {
       try {
+        if (index > 0 && showRetryFeedback) {
+          toast.message(`Connecting with backup key ${index + 1}...`, {
+            duration: 1000,
+            position: 'bottom-center'
+          });
+          // Add slight delay between retries
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+
         const response = await this.trySendWithKey(request, key);
+        this.trackKeyUsage(key, true);
         
-        // If we're not using the primary key, log which fallback worked
-        if (index > 0) {
-          console.log(`Request succeeded with fallback key ${index + 1}`);
+        if (index > 0 && showRetryFeedback) {
+          toast.success(`Connected with backup key`, {
+            duration: 2000,
+            position: 'bottom-center'
+          });
         }
         
         return response;
@@ -93,7 +147,10 @@ export class ChatService {
     throw new Error(errorMsg);
   }
 
-  async *streamResponse(response: Response): AsyncGenerator<string, void, unknown> {
+  async *streamResponse(response: Response): AsyncGenerator<string | {type: string, data: any}, void, unknown> {
+    // Yield a signal before starting the stream
+    yield {type: 'stream_start', data: {}};
+    
     const reader = response.body?.getReader();
     if (!reader) {
       throw new Error('No response body');
