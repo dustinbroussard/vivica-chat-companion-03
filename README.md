@@ -1,91 +1,91 @@
-# Welcome to your Lovable project
+# Vivica: Your Local AI Chat Companion
 
-## Project info
+**Vivica** is a privacy-first, AI-powered chat assistant built for real personality, deep memory, and full user control—all running locally as a PWA. She’s more than just another chatbot: Vivica remembers, adapts, and reacts in ways no other assistant does.
 
-**URL**: https://lovable.dev/projects/771e90b6-413f-443b-b65d-b0fa0c6759fd
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- **True Local-First Design:**  
+  All chat, memory, API keys, and settings are stored _locally_. No cloud sync, no account needed, and your data is yours.
 
-**Use Lovable**
+- **Personalities & Personas:**  
+  - **Vivica** is the always-on, never-deletable default persona:  
+    > “Sharp wit, sultry charm, unapologetic presence, and a little dangerous.”
+  - Add and edit your own profiles, each with their own model, prompt, and settings.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/771e90b6-413f-443b-b65d-b0fa0c6759fd) and start prompting.
+- **Multi-Model Support:**  
+  - Choose your own AI model for each profile.
+  - Assign a specialized coder model (like `qwen/qwen-2.5-coder-32b-instruct:free`) for programming questions, with seamless handoff to Vivica for human-style delivery.
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Voice Mode (with Custom Animation):**  
+  - Beautiful orb animation for speech recognition and text-to-speech.
+  - VoiceMode is responsive, visually dynamic, and designed to *feel* like a real companion—not just a boring mic button.
 
-**Use your preferred IDE**
+- **Memory System (Knowledge Base):**  
+  - **Global memory**: persistent knowledge shared by all profiles.
+  - **Profile-specific memory**: each persona can remember unique facts or stories.
+  - Memories are summarized and saved with one click, can be edited or deleted, and are included as context in future chats.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Save & Summarize:**  
+  - Click the bookmark icon to save a conversation summary and key facts to memory, with Vivica’s voice and style.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **Reliable API Key Management:**  
+  - Add up to three OpenRouter keys; Vivica automatically falls back to the next key on error or rate limit.
+  - Brave Search API support for live web results—key is stored locally and never sent to a server.
 
-Follow these steps:
+- **Web Search Integration:**  
+  - Use `/search your topic` in chat to fetch real-time results via Brave Search.
+  - Vivica summarizes, analyzes, or jokes about search results in her own style.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- **Weather Widget:**  
+  - Up-to-the-minute local weather in the sidebar/welcome screen.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- **Animated RSS News Ticker:**  
+  - Scrolls through the latest headlines from your chosen (or default CNN US) RSS feed.
+  - Click a headline to inject it into chat—Vivica will summarize, comment, or roast the news on demand.
 
-# Step 3: Install the necessary dependencies.
-npm i
+- **Progressive Web App (PWA):**  
+  - Installable on desktop and mobile.
+  - Works offline, full data persistence, fast loading.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+- **Modern UI & Theme System:**  
+  - Multiple color themes, dark/light toggle (with advanced dark themes for AMOLED screens).
+  - Clean, focused layout designed for both desktop and mobile use.
 
-### Troubleshooting module script errors
+---
 
-If you open `index.html` directly or deploy the project without building it, the
-browser may log an error similar to:
+## Quick Start
 
-```
-Failed to load module script: Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "application/octet-stream".
-```
+1. **Clone or download the repo.**
+2. `npm install`
+3. `npm run dev` (or `npm run build` for production)
+4. Open in your browser. Vivica is ready!
 
-This happens because the browser is trying to load the TypeScript entry file
-(`src/main.tsx`) without Vite transpiling it. Run the development server with
-`npm run dev` or build the project using `npm run build` and serve the files
-from the generated `dist` directory to resolve the issue.
+## Usage Notes
 
-### Deploying to GitHub Pages
+- **API Keys:**  
+  Add your OpenRouter and Brave Search keys in the settings menu.  
+  (All keys are saved locally and never shared.)
+- **Profiles:**  
+  Vivica is always available. Add/edit other personas as you wish!
+- **Memory:**  
+  Save important chat moments, facts, or summaries to memory.  
+  Edit or delete anytime in the Memory Manager.
+- **RSS/Weather:**  
+  Customize in settings, or enjoy the defaults.
 
-GitHub Pages only serves static files. Run `npm run build` to generate the `dist/` directory, then publish the contents of that folder (for example using a `gh-pages` branch). Opening `index.html` without building first will lead to the module MIME type error above.
+---
 
-**Edit a file directly in GitHub**
+## Credits & License
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Built by [Dustin] and ChatGPT (Cadence)—with heart, humor, and way too many late-night debugging sessions.  
+Inspired by the blues, open-source, and the dream of a truly personal AI.
 
-**Use GitHub Codespaces**
+**MIT License.**  
+Feel free to fork, remix, and build your own companion.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+---
 
-## What technologies are used for this project?
+*“Sharp wit, sultry charm, unapologetic presence, and a little dangerous.”*  
+— Vivica, probably
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/771e90b6-413f-443b-b65d-b0fa0c6759fd) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
