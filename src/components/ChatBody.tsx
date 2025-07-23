@@ -183,6 +183,8 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
                   <div className={`message-bubble ${message.role} ${
                     message.failed ? 'border-accent/50 bg-accent/10' : ''
                   } ${message.isCodeResponse ? 'code-bubble' : ''}`}>
+                    {/* TODO(vivica-audit): add CSS for .code-bubble so code responses
+                        stand out from normal messages */}
                     <div className="prose dark:prose-invert break-words max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {
