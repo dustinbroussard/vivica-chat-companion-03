@@ -7,7 +7,8 @@
  * to provide a seamless voice interaction mode.
  */
 
-import { sendToAndroidLog, isAndroidBridgeAvailable } from './android-bridge.js';
+const isAndroidBridgeAvailable = () => false; // Default to false if bridge not available
+const sendToAndroidLog = (level, tag, message) => console.log(`[${level}/${tag}] ${message}`); // Fallback logging
 import Storage, { PersonaStorage, MemoryStorage, MessageStorage, ConversationStorage } from './storage-wrapper.js';
 
 const VOICE_MODE_DEBUG_TAG = 'VoiceMode';
