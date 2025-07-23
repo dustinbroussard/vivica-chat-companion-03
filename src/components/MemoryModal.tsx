@@ -235,16 +235,17 @@ export const MemoryModal = ({
                 </Button>
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-4">
               <Label className="text-base font-semibold">Enable Memory</Label>
-              <Button
-                variant={isActive ? "default" : "outline"}
-                size="sm"
-                onClick={() => setIsActive(!isActive)}
-                className={isActive ? "bg-accent hover:bg-accent/90" : ""}
-              >
-                {isActive ? "Active" : "Inactive"}
-              </Button>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant={isActive ? "default" : "outline"}
+                  className="px-4 py-2.5 rounded-md min-w-[100px]"
+                  onClick={() => setIsActive(!isActive)}
+                >
+                  {isActive ? "Active" : "Inactive"}
+                </Button>
+              </div>
             </div>
           </div>
 
