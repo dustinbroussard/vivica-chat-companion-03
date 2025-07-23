@@ -680,6 +680,15 @@
   border: var(--assistant-bubble-border);
 }
 
+/* Distinct styling for messages containing code */
+.code-bubble {
+  background: hsl(var(--bg-tertiary));
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  border: 1px solid hsl(var(--border-custom));
+  box-shadow: 0 1px 4px hsl(var(--shadow));
+}
+
 /* Typing indicator */
 .typing-indicator {
   display: flex;
