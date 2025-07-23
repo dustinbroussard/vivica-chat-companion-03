@@ -18,8 +18,8 @@ interface MemoryItem {
 }
 
 // Memory helpers for IndexedDB storage. Prompt building now reads from
-// the DB, so these entries fully influence Vivica's replies. Once all
-// components use the new keys, legacy storage support can be removed.
+// the DB, so these entries fully influence Vivica's replies. The legacy
+// `vivica-memory` key has been retired in favor of scoped keys.
 
 /**
  * Saves a new memory item with scope control
@@ -83,7 +83,7 @@ export async function clearAllMemories(): Promise<void> {
 }
 
 /**
- * Saves conversational memory (legacy wrapper)
+ * Summarizes a conversation and saves it to memory
  * @param messages - Chat messages to summarize
  * @param model - Model name for summarization
  * @param apiKey - API key for LLM calls

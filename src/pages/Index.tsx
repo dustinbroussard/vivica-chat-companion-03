@@ -99,6 +99,8 @@ const Index = () => {
     initializeProfiles();
     loadConversations();
     loadCurrentProfile();
+    // Drop legacy memory key after migration
+    localStorage.removeItem('vivica-memory');
     const handler = () => loadCurrentProfile();
     window.addEventListener('profilesUpdated', handler);
     return () => window.removeEventListener('profilesUpdated', handler);
@@ -229,25 +231,20 @@ const Index = () => {
     const profileId = localStorage.getItem('vivica-current-profile') || '';
     const parts: Record<string, unknown>[] = [];
 
-    // Prefer new scoped keys; fall back to legacy key for older installs
-
     const globalMem = localStorage.getItem('vivica-memory-global');
     const profileMem = profileId
       ? localStorage.getItem(`vivica-memory-profile-${profileId}`)
       : null;
-    const legacyMem = localStorage.getItem('vivica-memory');
 
-    if (globalMem || profileMem) {
-      if (globalMem) {
-        try { parts.push(JSON.parse(globalMem)); } catch { /* ignore */ }
-      }
-      if (profileMem) {
-        try { parts.push(JSON.parse(profileMem)); } catch { /* ignore */ }
-      }
-    } else if (legacyMem) {
-      try { parts.push(JSON.parse(legacyMem)); } catch { /* ignore */ }
-      // TODO(vivica-migration): remove legacy fallback after migration
+    if (globalMem) {
+      try { parts.push(JSON.parse(globalMem)); } catch { /* ignore */ }
     }
+    if (profileMem) {
+      try { parts.push(JSON.parse(profileMem)); } catch { /* ignore */ }
+    }
+
+    // Remove any stale legacy key
+    localStorage.removeItem('vivica-memory');
 
     let prompt = '';
     for (const memory of parts) {
@@ -289,9 +286,6 @@ const Index = () => {
     } catch (e) {
       console.warn('Failed to load memories from DB', e);
     }
-
-    // When the migration is finished and all code paths use the new keys,
-    // this function can drop the legacy logic above.
 
     return prompt.trim();
   };
