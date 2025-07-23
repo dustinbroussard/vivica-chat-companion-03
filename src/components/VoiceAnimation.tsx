@@ -1,8 +1,15 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { voiceAnimation } from "@/js/voice-animation";
+import { 
+  initVoiceMode, 
+  startListening, 
+  stopListening, 
+  getIsListening,
+  updateVoiceModeConfig 
+} from "@/js/voice-mode";
 
 interface VoiceAnimationProps {
   isVisible: boolean;
@@ -25,17 +32,31 @@ export const VoiceAnimation = ({
   const [unsupported] = useState(false);
 
   useEffect(() => {
-    if (isVisible) {
-      voiceAnimation.show();
-      voiceAnimation.setState('listening');
-    } else {
+    if (!isVisible) {
       voiceAnimation.hide();
+      stopListening();
+      return;
     }
+
+    // Initialize voice mode with callbacks
+    voiceAnimation.show();
+    voiceAnimation.setState('listening');
+    
+    updateVoiceModeConfig({
+      onListenStateChange: voiceAnimation.setState,
+      onVisualizerData: voiceAnimation.updateVolume
+    });
+
+    initVoiceMode({
+      systemPrompt: buildSystemPrompt(),
+      conversationId: currentProfile.id,
+    });
 
     return () => {
       voiceAnimation.hide();
+      stopListening();
     };
-  }, [isVisible]);
+  }, [isVisible, currentProfile, buildSystemPrompt]);
 
   const getStateLabel = (state: VoiceState) => {
     switch (state) {
@@ -122,9 +143,11 @@ export const VoiceAnimation = ({
         <Button
           variant="outline"
           onClick={() => {
-            const newState = voiceState === 'listening' ? 'idle' : 'listening';
-            setVoiceState(newState);
-            voiceAnimation.setState(newState === 'listening' ? 'listening' : 'idle');
+            if (getIsListening()) {
+              stopListening();
+            } else {
+              startListening();
+            }
           }}
           className="bg-white/10 border-white/30 text-white hover:bg-white/20"
         >
