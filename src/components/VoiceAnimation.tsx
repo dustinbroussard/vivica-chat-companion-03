@@ -69,7 +69,7 @@ export const VoiceAnimation = ({
       voiceAnimation.hide();
       stopListening();
     };
-  }, [isVisible, currentProfile, buildSystemPrompt]);
+  }, [isVisible, currentProfile, buildSystemPrompt, onSendMessage]);
 
   const getStateLabel = (state: VoiceState) => {
     switch (state) {
