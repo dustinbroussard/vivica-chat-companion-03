@@ -226,7 +226,7 @@ export class ChatService {
                 // If this was a code request, we'll need to send the result to Vivica for summary
                 yield {
                   content,
-                  isCodeRequest: request.isCodeRequest
+                  isCodeRequest: request?.isCodeRequest
                 };
               }
             } catch (e) {
