@@ -26,6 +26,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
     apiKey1: '',
     apiKey2: '',
     apiKey3: '',
+    braveApiKey: localStorage.getItem('braveApiKey') || '',
     rssFeeds: '',
     includeWeather: false,
     includeRss: false,
@@ -49,6 +50,8 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
   const handleSave = () => {
     // Save settings to localStorage
     localStorage.setItem('vivica-settings', JSON.stringify(settings));
+    // Store Brave API key separately for easy access
+    localStorage.setItem('braveApiKey', settings.braveApiKey);
     toast.success("Settings saved successfully!");
     onClose();
   };
@@ -80,6 +83,34 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
             <div className="flex items-center gap-2">
               <Key className="w-4 h-4" />
               <Label className="text-base font-semibold">API Keys</Label>
+            </div>
+            <div className="space-y-3">
+              <Label>Brave Search API Key</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="password"
+                  placeholder="Brave API Key"
+                  value={settings.braveApiKey}
+                  onChange={(e) => setSettings(prev => ({ ...prev, braveApiKey: e.target.value }))}
+                  className="flex-1"
+                />
+                {settings.braveApiKey !== localStorage.getItem('braveApiKey') && (
+                  <Button 
+                    onClick={() => {
+                      localStorage.setItem('braveApiKey', settings.braveApiKey);
+                      toast.success("Brave API Key saved!");
+                    }}
+                    variant="outline"
+                  >
+                    Save
+                  </Button>
+                )}
+              </div>
+              {!settings.braveApiKey && (
+                <p className="text-sm text-yellow-500">
+                  Web search will be disabled until a Brave API key is provided
+                </p>
+              )}
             </div>
             <div className="space-y-3">
               <Input
