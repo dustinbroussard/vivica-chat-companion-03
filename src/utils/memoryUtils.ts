@@ -1,7 +1,11 @@
 import { ChatMessage } from "@/services/chatService";
 import { toast } from "sonner";
-
-// TODO: replace localStorage with a real database when available
+import {
+  saveMemoryToDb,
+  deleteMemoryFromDb,
+  getAllMemoriesFromDb,
+  getMemoriesForProfile
+} from './indexedDb';
 
 interface MemoryItem {
   id: string;
@@ -29,12 +33,8 @@ export async function saveMemory(content: string, scope: 'global' | 'profile', p
     tags: scope === 'global' ? ['global'] : ['profile']
   };
 
-  const key = scope === 'global' 
-    ? 'vivica-memory-global' 
-    : `vivica-memory-profile-${profileId}`;
-
-  const existing = JSON.parse(localStorage.getItem(key) || '[]');
-  localStorage.setItem(key, JSON.stringify([...existing, memory]));
+  // Persist new memory in IndexedDB
+  await saveMemoryToDb(memory);
 
   return memory;
 }
@@ -45,18 +45,31 @@ export async function saveMemory(content: string, scope: 'global' | 'profile', p
  * @param scopeFilter - Optional filter ('global' | 'profile' | 'all')
  * @returns Filtered array of MemoryItem
  */
-export function getMemories(profileId?: string, scopeFilter?: 'global' | 'profile' | 'all'): MemoryItem[] {
-  const global = JSON.parse(localStorage.getItem('vivica-memory-global') || '[]');
-  
-  const profile = profileId 
-    ? JSON.parse(localStorage.getItem(`vivica-memory-profile-${profileId}`) || '[]')
-    : [];
-
+export async function getMemories(profileId?: string, scopeFilter: 'global' | 'profile' | 'all' = 'all'): Promise<MemoryItem[]> {
+  const all = await getMemoriesForProfile(profileId);
   switch (scopeFilter) {
-    case 'global': return global;
-    case 'profile': return profile;
-    default: return [...global, ...profile];
+    case 'global':
+      return all.filter(m => m.scope === 'global');
+    case 'profile':
+      return all.filter(m => m.scope === 'profile' && m.profileId === profileId);
+    default:
+      return all;
   }
+}
+
+/** Update an existing memory item */
+export async function editMemory(id: string, newContent: string): Promise<MemoryItem | undefined> {
+  const all = await getAllMemoriesFromDb();
+  const item = all.find(m => m.id === id);
+  if (!item) return undefined;
+  const updated = { ...item, content: newContent };
+  await saveMemoryToDb(updated);
+  return updated;
+}
+
+/** Remove a memory item by id */
+export async function deleteMemory(id: string): Promise<void> {
+  await deleteMemoryFromDb(id);
 }
 
 /**
