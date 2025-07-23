@@ -10,6 +10,13 @@ export interface ChatRequest {
   temperature?: number;
   max_tokens?: number;
   stream?: boolean;
+  isCodeRequest?: boolean; // Flag for code requests
+  profile?: {  // Include full profile for model routing
+    model: string;
+    codeModel: string;
+    temperature: number;
+    maxTokens: number;
+  };
 }
 
 export class ChatService {
@@ -82,10 +89,29 @@ export class ChatService {
     }
   }
 
+  private isCodeRequest(messages: ChatMessage[]): boolean {
+    // Check if last message contains code-related keywords or backticks
+    const lastMessage = messages[messages.length - 1]?.content.toLowerCase() || '';
+    return lastMessage.includes('code') || 
+           lastMessage.includes('function') ||
+           lastMessage.includes('```') ||
+           lastMessage.includes('programming');
+  }
+
   async sendMessage(request: ChatRequest): Promise<Response> {
+    // Route to code model if this is a code request
+    const isCode = request.isCodeRequest ?? this.isCodeRequest(request.messages);
+    const effectiveModel = isCode && request.profile?.codeModel 
+      ? request.profile.codeModel 
+      : request.model;
+
     console.log('Sending request to OpenRouter:', {
       url: `${this.baseUrl}/chat/completions`,
-      request: request
+      request: {
+        ...request,
+        model: effectiveModel,
+        isCodeRequest: isCode
+      }
     });
 
     // Get all API keys from storage - constructor key first, then settings keys
@@ -147,9 +173,11 @@ export class ChatService {
     throw new Error(errorMsg);
   }
 
-  async *streamResponse(response: Response): AsyncGenerator<string | {type: string, data: any}, void, unknown> {
+  async *streamResponse(response: Response, request?: ChatRequest): AsyncGenerator<string | {type: string, data: any}, void, unknown> {
     // Yield a signal before starting the stream
-    yield {type: 'stream_start', data: {}};
+    yield {type: 'stream_start', data: {
+      isCodeResponse: request?.isCodeRequest
+    }};
     
     const reader = response.body?.getReader();
     if (!reader) {
@@ -178,7 +206,11 @@ export class ChatService {
               const parsed = JSON.parse(data);
               const content = parsed.choices?.[0]?.delta?.content;
               if (content) {
-                yield content;
+                // If this was a code request, we'll need to send the result to Vivica for summary
+                yield { 
+                  content,
+                  isCodeResponse: request.isCodeRequest 
+                };
               }
             } catch (e) {
               console.warn('Failed to parse streaming response:', e);
