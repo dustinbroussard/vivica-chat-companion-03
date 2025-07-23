@@ -1,5 +1,6 @@
 // Readability gives us a clean article body from messy HTML pages.
 import { Readability } from '@mozilla/readability';
+import { DEFAULT_RSS_FEED } from '@/utils/constants';
 
 export interface Headline {
   title: string;
@@ -8,7 +9,7 @@ export interface Headline {
   source?: string;
 }
 
-const DEFAULT_FEED = 'https://rss.cnn.com/rss/cnn_us.rss';
+const DEFAULT_FEED = DEFAULT_RSS_FEED;
 
 export async function fetchRSSHeadlines(): Promise<Headline[]> {
   const parser = new DOMParser();
