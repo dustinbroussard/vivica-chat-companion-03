@@ -11,6 +11,40 @@ import { toast } from "sonner";
 import { ChatService, ChatMessage } from "@/services/chatService";
 import { Storage } from "@/utils/storage";
 
+function weatherCodeToText(code: number): string {
+  const map: Record<number, string> = {
+    0: 'Clear sky',
+    1: 'Mainly clear',
+    2: 'Partly cloudy',
+    3: 'Overcast',
+    45: 'Fog',
+    48: 'Depositing rime fog',
+    51: 'Light drizzle',
+    53: 'Drizzle',
+    55: 'Dense drizzle',
+    56: 'Freezing drizzle',
+    57: 'Freezing dense drizzle',
+    61: 'Slight rain',
+    63: 'Rain',
+    65: 'Heavy rain',
+    66: 'Freezing rain',
+    67: 'Heavy freezing rain',
+    71: 'Slight snow',
+    73: 'Snow',
+    75: 'Heavy snow',
+    77: 'Snow grains',
+    80: 'Slight showers',
+    81: 'Showers',
+    82: 'Violent showers',
+    85: 'Slight snow showers',
+    86: 'Heavy snow showers',
+    95: 'Thunderstorm',
+    96: 'Thunderstorm with hail',
+    99: 'Violent thunderstorm'
+  };
+  return map[code] || 'Unknown';
+}
+
 interface Message {
   id: string;
   content: string;
@@ -234,15 +268,58 @@ const Index = () => {
     return '';
   };
 
-  const buildSystemPrompt = () => {
+  const fetchWeatherInfo = async (): Promise<string> => {
+    const fallback = { lat: 30.2366, lon: -92.8204, name: 'Welsh, LA' };
+
+    const fetchWeather = async (lat: number, lon: number) => {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit`;
+      try {
+        const resp = await fetch(url);
+        const data = await resp.json();
+        const current = data.current_weather;
+        const temp = Math.round(current.temperature) + '°F';
+        const condText = weatherCodeToText(current.weathercode);
+        return `${condText}, ${temp}`;
+      } catch {
+        return 'Weather unavailable.';
+      }
+    };
+
+    return new Promise((resolve) => {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            const result = await fetchWeather(pos.coords.latitude, pos.coords.longitude);
+            resolve(result);
+          },
+          async () => {
+            const result = await fetchWeather(fallback.lat, fallback.lon);
+            resolve(result);
+          },
+          { enableHighAccuracy: false, timeout: 4000, maximumAge: 180000 }
+        );
+      } else {
+        fetchWeather(fallback.lat, fallback.lon).then(resolve);
+      }
+    });
+  };
+
+  const buildSystemPrompt = async () => {
     const profilePrompt = currentProfile?.systemPrompt || 'You are a helpful AI assistant.';
     const memoryPrompt = getMemoryPrompt();
-    
+    const settings = Storage.get('vivica-settings', { includeWeather: false });
+
+    let prompt = profilePrompt;
     if (memoryPrompt) {
-      return `${profilePrompt}\n\nUser Context: ${memoryPrompt}`;
+      prompt += `\n\nUser Context: ${memoryPrompt}`;
     }
-    
-    return profilePrompt;
+
+    if (settings.includeWeather) {
+      const weather = await fetchWeatherInfo();
+      prompt += `\n\nCurrent Weather: ${weather}`;
+    }
+
+    return prompt;
   };
 
   const handleNewChat = () => {
@@ -293,7 +370,7 @@ const Index = () => {
       return;
     }
 
-    const systemPrompt = buildSystemPrompt();
+    const systemPrompt = await buildSystemPrompt();
     const chatMessages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
       ...updatedConversation.messages.map(m => ({ role: m.role, content: m.content }))
@@ -505,6 +582,7 @@ const Index = () => {
           currentProfile={currentProfile}
           getMemoryPrompt={getMemoryPrompt}
           buildSystemPrompt={buildSystemPrompt}
+          onSendMessage={handleSendMessage}
         />
       )}
 

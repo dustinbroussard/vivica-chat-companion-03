@@ -58,6 +58,9 @@
     --user-bubble-bg: hsl(var(--bg-primary));
     --user-bubble-text: hsl(var(--text-primary));
     --user-bubble-border: 1px solid hsl(var(--accent-primary));
+    --assistant-bubble-bg: hsl(var(--bg-secondary));
+    --assistant-bubble-text: hsl(var(--text-primary));
+    --assistant-bubble-border: 1px solid hsl(var(--border-custom));
     --gradient-primary: linear-gradient(135deg, hsl(var(--bg-primary)) 0%, hsl(var(--bg-hover)) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(var(--theme-primary)) 0%, hsl(var(--theme-accent)) 100%);
     --modal-bg: hsl(var(--bg-secondary));
@@ -669,11 +672,11 @@
 }
 
 .message-bubble.assistant {
-  background: hsl(var(--bg-secondary));
-  color: hsl(var(--text-primary));
+  background: var(--assistant-bubble-bg);
+  color: var(--assistant-bubble-text);
   margin-right: auto;
   border-bottom-left-radius: 6px;
-  border: 1px solid hsl(var(--border-custom));
+  border: var(--assistant-bubble-border);
 }
 
 /* Typing indicator */
