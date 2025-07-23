@@ -15,6 +15,8 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
 interface MemoryData {
+  scope: 'global' | 'profile';
+  profileId?: string;
   identity: {
     name: string;
     pronouns: string;
@@ -86,9 +88,20 @@ export const MemoryModal = ({
   }, []);
 
   const handleSave = () => {
-    localStorage.setItem('vivica-memory', JSON.stringify(memory));
+    const profileId = localStorage.getItem('vivica-current-profile');
+    const saveMemory = {
+      ...memory,
+      profileId: memory.scope === 'profile' ? profileId : undefined
+    };
+
+    const key = memory.scope === 'global' 
+      ? 'vivica-memory-global'
+      : `vivica-memory-profile-${profileId}`;
+
+    localStorage.setItem(key, JSON.stringify(saveMemory));
     localStorage.setItem('vivica-memory-active', JSON.stringify(isActive));
-    toast.success("Memory settings saved!");
+    
+    toast.success(`Memory saved (${memory.scope} scope)!`);
     onClose();
   };
 
