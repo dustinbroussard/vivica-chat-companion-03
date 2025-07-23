@@ -13,6 +13,7 @@ interface Profile {
   id: string;
   name: string;
   model: string;
+  codeModel?: string;
   systemPrompt: string;
   temperature: number;
   maxTokens: number;

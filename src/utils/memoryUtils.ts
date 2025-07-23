@@ -1,6 +1,7 @@
-import { MemoryStorage } from "@/js/voice-mode";
 import { ChatMessage } from "@/services/chatService";
 import { toast } from "sonner";
+
+// TODO: replace localStorage with a real database when available
 
 interface MemoryItem {
   id: string;
@@ -141,7 +142,7 @@ export async function saveConversationMemory(
       tags: ['auto-summary']
     };
 
-    await MemoryStorage.addMemory(memoryData);
+    await saveMemory(cleanedSummary, scope, profileId);
     toast.success("Conversation saved to memory!");
     return memoryData;
   } catch (error) {

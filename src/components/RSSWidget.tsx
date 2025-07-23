@@ -46,7 +46,11 @@ async function fetchRSSSummariesWithLinks(urls: string[]): Promise<Headline[]> {
   return headlines.slice(0, 20); // Limit to 20 headlines
 }
 
-export const RSSWidget = () => {
+interface RSSWidgetProps {
+  onSendMessage: (content: string) => void;
+}
+
+export const RSSWidget = ({ onSendMessage }: RSSWidgetProps) => {
   const tickerRef = useRef<HTMLDivElement>(null);
   const [currentHeadline, setCurrentHeadline] = useState<Headline | null>(null);
   const [headlines, setHeadlines] = useState<Headline[]>([]);
@@ -60,10 +64,10 @@ export const RSSWidget = () => {
       setLoading(true);
       setError('');
       const settings = Storage.get('vivica-settings', { rssFeeds: '' });
-      if (!settings.rssFeeds) return;
-      
-      const feeds = settings.rssFeeds.split(',').map((s: string) => s.trim()).filter(Boolean);
-      if (!feeds.length) return;
+
+      const feeds = settings.rssFeeds
+        ? settings.rssFeeds.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : [DEFAULT_FEED];
       
       try {
         const fetchedHeadlines = await fetchRSSSummariesWithLinks(feeds);
@@ -107,7 +111,7 @@ export const RSSWidget = () => {
   const handleHeadlineClick = () => {
     if (currentHeadline.link.startsWith('http')) {
       const messageContent = `Here's the news article I'm reading about “${currentHeadline.title}”. Please analyze and summarize it for me nicely.`;
-      handleSendMessage(messageContent);
+      onSendMessage(messageContent);
     } else {
       toast.warning('Invalid news link');
     }
