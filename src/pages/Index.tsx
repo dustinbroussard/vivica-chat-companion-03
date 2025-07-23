@@ -10,6 +10,7 @@ import { MemoryModal } from "@/components/MemoryModal";
 import { toast } from "sonner";
 import { ChatService, ChatMessage } from "@/services/chatService";
 import { Storage } from "@/utils/storage";
+import { fetchRSSHeadlines } from "@/services/rssService";
 
 function weatherCodeToText(code: number): string {
   const map: Record<number, string> = {
@@ -307,7 +308,7 @@ const Index = () => {
   const buildSystemPrompt = async () => {
     const profilePrompt = currentProfile?.systemPrompt || 'You are a helpful AI assistant.';
     const memoryPrompt = getMemoryPrompt();
-    const settings = Storage.get('vivica-settings', { includeWeather: false });
+    const settings = Storage.get('vivica-settings', { includeWeather: false, includeRss: false });
 
     let prompt = profilePrompt;
     if (memoryPrompt) {
@@ -317,6 +318,18 @@ const Index = () => {
     if (settings.includeWeather) {
       const weather = await fetchWeatherInfo();
       prompt += `\n\nCurrent Weather: ${weather}`;
+    }
+
+    if (settings.includeRss) {
+      try {
+        const headlines = await fetchRSSHeadlines();
+        const list = headlines.slice(0, 5).map(h => `- ${h.title} (${h.source})`).join('\n');
+        if (list) {
+          prompt += `\n\nCurrent Headlines:\n${list}`;
+        }
+      } catch (e) {
+        console.debug('Failed to fetch headlines', e);
+      }
     }
 
     return prompt;
@@ -563,6 +576,7 @@ const Index = () => {
           isTyping={isTyping}
           onRetryMessage={handleRetryMessage}
           onSendMessage={handleSendMessage}
+          onNewChat={handleNewChat}
         />
         
         <ChatFooter
