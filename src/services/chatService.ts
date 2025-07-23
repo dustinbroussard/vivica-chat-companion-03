@@ -20,7 +20,7 @@ export interface ChatRequest {
 }
 
 export class ChatService {
-  private apiKey: string;
+  private apiKeyList: string[];
   private baseUrl = 'https://openrouter.ai/api/v1';
   private telemetry = {
     keyUsage: {} as Record<string, {success: number, failures: number}>,
