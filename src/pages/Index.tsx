@@ -88,6 +88,7 @@ const Index = () => {
   const [showProfiles, setShowProfiles] = useState(false);
   const [showMemory, setShowMemory] = useState(false);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const chatBodyRef = useRef<HTMLDivElement>(null);
 
   // Initialize default profiles and load data
@@ -348,8 +349,9 @@ const Index = () => {
     toast.success("New conversation started!");
   };
 
-  const handleSendMessage = async (content: string) => {
-    if (!currentConversation || !content.trim() || !currentProfile) return;
+  const handleSendMessage = async (content: string, baseConv?: Conversation) => {
+    const conversation = baseConv || currentConversation;
+    if (!conversation || !content.trim() || !currentProfile) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -360,18 +362,18 @@ const Index = () => {
     };
 
     const updatedConversation = {
-      ...currentConversation,
-      messages: [...currentConversation.messages, userMessage],
+      ...conversation,
+      messages: [...conversation.messages, userMessage],
       lastMessage: content.trim(),
       timestamp: new Date(),
-      title: currentConversation.messages.length === 0 ? 
-        content.trim().substring(0, 30) + (content.trim().length > 30 ? '...' : '') : 
-        currentConversation.title,
+      title: conversation.messages.length === 0 ?
+        content.trim().substring(0, 30) + (content.trim().length > 30 ? '...' : '') :
+        conversation.title,
     };
 
     setCurrentConversation(updatedConversation);
-    setConversations(prev => prev.map(conv => 
-      conv.id === currentConversation.id ? updatedConversation : conv
+    setConversations(prev => prev.map(conv =>
+      conv.id === conversation.id ? updatedConversation : conv
     ));
 
     setIsTyping(true);
@@ -408,7 +410,7 @@ const Index = () => {
 
     setCurrentConversation(streamingConversation);
     setConversations(prev => prev.map(conv =>
-      conv.id === currentConversation.id ? streamingConversation : conv
+      conv.id === conversation.id ? streamingConversation : conv
     ));
 
     try {
@@ -431,7 +433,7 @@ const Index = () => {
           return { ...prev, messages: msgs, lastMessage: fullContent };
         });
         setConversations(prev => prev.map(conv => {
-          if (conv.id !== currentConversation.id) return conv;
+          if (conv.id !== conversation.id) return conv;
           const msgs = conv.messages.map(msg =>
             msg.id === assistantMessage.id ? { ...msg, content: fullContent } : msg
           );
@@ -462,7 +464,7 @@ const Index = () => {
 
       setCurrentConversation(errorConversation);
       setConversations(prev => prev.map(conv =>
-        conv.id === currentConversation.id ? errorConversation : conv
+        conv.id === conversation.id ? errorConversation : conv
       ));
 
       toast.error('Failed to get AI response. Please try again.');
@@ -484,13 +486,58 @@ const Index = () => {
           messages: updatedMessages
         };
         setCurrentConversation(updatedConversation);
-        setConversations(prev => prev.map(conv => 
+        setConversations(prev => prev.map(conv =>
           conv.id === currentConversation.id ? updatedConversation : conv
         ));
-        
-        handleSendMessage(userMessage.content);
+
+        handleSendMessage(userMessage.content, updatedConversation);
       }
     }
+  };
+
+  const handleRegenerateMessage = (messageId: string) => {
+    if (!currentConversation) return;
+
+    const messageIndex = currentConversation.messages.findIndex(msg => msg.id === messageId);
+    if (messageIndex > 0) {
+      const userMessage = currentConversation.messages[messageIndex - 1];
+      if (userMessage.role === 'user') {
+        const updatedMessages = currentConversation.messages.slice(0, messageIndex);
+        const updatedConversation = {
+          ...currentConversation,
+          messages: updatedMessages
+        };
+        setCurrentConversation(updatedConversation);
+        setConversations(prev => prev.map(conv =>
+          conv.id === currentConversation.id ? updatedConversation : conv
+        ));
+
+        handleSendMessage(userMessage.content, updatedConversation);
+      }
+    }
+  };
+
+  const handleSendEditedMessage = (content: string) => {
+    if (!currentConversation || !editingMessage) return;
+
+    const index = currentConversation.messages.findIndex(m => m.id === editingMessage.id);
+    if (index >= 0) {
+      const updatedMessages = currentConversation.messages.slice(0, index);
+      const updatedConversation = {
+        ...currentConversation,
+        messages: updatedMessages
+      };
+      setCurrentConversation(updatedConversation);
+      setConversations(prev => prev.map(conv =>
+        conv.id === currentConversation.id ? updatedConversation : conv
+      ));
+      setEditingMessage(null);
+      handleSendMessage(content, updatedConversation);
+    }
+  };
+
+  const handleStartEditMessage = (message: Message) => {
+    setEditingMessage(message);
   };
 
 
@@ -575,14 +622,17 @@ const Index = () => {
           conversation={currentConversation}
           isTyping={isTyping}
           onRetryMessage={handleRetryMessage}
+          onRegenerateMessage={handleRegenerateMessage}
+          onEditMessage={handleStartEditMessage}
           onSendMessage={handleSendMessage}
           onNewChat={handleNewChat}
         />
-        
+
         <ChatFooter
-          onSendMessage={handleSendMessage}
+          onSendMessage={editingMessage ? handleSendEditedMessage : handleSendMessage}
           onVoiceToggle={handleVoiceToggle}
           isVoiceMode={isVoiceMode}
+          editingMessage={editingMessage?.content}
         />
       </div>
 
