@@ -66,6 +66,16 @@ export class Storage {
       return false;
     }
   }
+
+  static createVivicaProfile() {
+    return {
+      id: 'vivica', 
+      name: 'Vivica',
+      model: 'deepseek/deepseek-chat-v3-0324:free',
+      temperature: 0.9,
+      isVivica: true
+    } as Profile;
+  }
 }
 
 // Debounced storage writer
