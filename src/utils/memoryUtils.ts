@@ -1,16 +1,13 @@
 import { ChatMessage } from "@/services/chatService";
 import { toast } from "sonner";
+import {
+  addMemory,
+  getMemories as dbGetMemories,
+  MemoryItem,
+} from "@/js/db-utils";
 
-// TODO: replace localStorage with a real database when available
+// Memory utilities backed by IndexedDB
 
-interface MemoryItem {
-  id: string;
-  content: string;
-  scope: 'global' | 'profile';
-  profileId?: string;
-  createdAt: string;
-  tags: string[];
-}
 
 /**
  * Saves a new memory item with scope control
@@ -29,13 +26,7 @@ export async function saveMemory(content: string, scope: 'global' | 'profile', p
     tags: scope === 'global' ? ['global'] : ['profile']
   };
 
-  const key = scope === 'global' 
-    ? 'vivica-memory-global' 
-    : `vivica-memory-profile-${profileId}`;
-
-  const existing = JSON.parse(localStorage.getItem(key) || '[]');
-  localStorage.setItem(key, JSON.stringify([...existing, memory]));
-
+  await addMemory(memory);
   return memory;
 }
 
@@ -45,17 +36,15 @@ export async function saveMemory(content: string, scope: 'global' | 'profile', p
  * @param scopeFilter - Optional filter ('global' | 'profile' | 'all')
  * @returns Filtered array of MemoryItem
  */
-export function getMemories(profileId?: string, scopeFilter?: 'global' | 'profile' | 'all'): MemoryItem[] {
-  const global = JSON.parse(localStorage.getItem('vivica-memory-global') || '[]');
-  
-  const profile = profileId 
-    ? JSON.parse(localStorage.getItem(`vivica-memory-profile-${profileId}`) || '[]')
-    : [];
-
+export async function getMemories(profileId?: string, scopeFilter?: 'global' | 'profile' | 'all'): Promise<MemoryItem[]> {
+  const all = await dbGetMemories(profileId);
   switch (scopeFilter) {
-    case 'global': return global;
-    case 'profile': return profile;
-    default: return [...global, ...profile];
+    case 'global':
+      return all.filter(m => m.scope === 'global');
+    case 'profile':
+      return all.filter(m => m.scope === 'profile');
+    default:
+      return all;
   }
 }
 

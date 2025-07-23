@@ -14,47 +14,29 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import {
+  loadMemorySettings,
+  saveMemorySettings,
+  MemoryData,
+  MemoryItem,
+} from "@/js/db-utils";
 
-interface MemoryData {
-  scope: 'global' | 'profile';
-  profileId?: string;
-  identity: {
-    name: string;
-    pronouns: string;
-    occupation: string;
-    location: string;
-  };
-  personality: {
-    tone: string;
-    style: string;
-    interests: string;
-  };
-  customInstructions: string;
-  systemNotes: string;
-  tags: string;
-}
-
-interface MemoryItem {
-  id: string;
-  content: string;
-  createdAt: string;
-  tags: string[];
-}
+// Interfaces imported from db-utils
 
 interface MemoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   memories: MemoryItem[];
-  onDeleteMemory: (id: string) => void;
-  onEditMemory: (id: string, newContent: string) => void;
+  onDeleteMemory?: (memory: MemoryItem) => void;
+  onEditMemory?: (memory: MemoryItem) => void;
 }
 
 export const MemoryModal = ({ 
   isOpen, 
   onClose,
   memories = [],
-  onDeleteMemory,
-  onEditMemory
+  onDeleteMemory = () => {},
+  onEditMemory = () => {}
 }: MemoryModalProps) => {
   const currentProfileId = localStorage.getItem('vivica-current-profile') || '';
   const [memory, setMemory] = useState<MemoryData>({
@@ -78,32 +60,36 @@ export const MemoryModal = ({
   const [scopeFilter, setScopeFilter] = useState<'all'|'global'|'profile'>('all');
 
   useEffect(() => {
-    const savedMemory = localStorage.getItem('vivica-memory');
-    const memoryActive = localStorage.getItem('vivica-memory-active');
-    
-    if (savedMemory) {
-      setMemory(JSON.parse(savedMemory));
+    async function load() {
+      const memoryActive = localStorage.getItem('vivica-memory-active');
+      const globalMem = await loadMemorySettings('global');
+      const profileMem = currentProfileId ? await loadMemorySettings(currentProfileId) : null;
+
+      if (profileMem) {
+        setMemory(profileMem);
+      } else if (globalMem) {
+        setMemory(globalMem);
+      }
+
+      if (memoryActive !== null) {
+        setIsActive(JSON.parse(memoryActive));
+      }
     }
-    
-    if (memoryActive !== null) {
-      setIsActive(JSON.parse(memoryActive));
-    }
+    load();
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const profileId = localStorage.getItem('vivica-current-profile');
     const saveMemory = {
       ...memory,
       profileId: memory.scope === 'profile' ? profileId : undefined
-    };
+    } as MemoryData;
 
-    const key = memory.scope === 'global' 
-      ? 'vivica-memory-global'
-      : `vivica-memory-profile-${profileId}`;
+    const key = memory.scope === 'global' ? 'global' : profileId || '';
 
-    localStorage.setItem(key, JSON.stringify(saveMemory));
+    await saveMemorySettings(key, saveMemory);
     localStorage.setItem('vivica-memory-active', JSON.stringify(isActive));
-    
+
     toast.success(`Memory saved (${memory.scope} scope)!`);
     onClose();
   };
@@ -423,9 +409,9 @@ export const MemoryModal = ({
                         <Button
                           variant="ghost"
                           size="xs"
-                          onClick={() => onEditMemory({
+                          onClick={() => onEditMemory?.({
                             ...memory,
-                            ...(memory.scope === 'profile' && {profileId: currentProfileId}) 
+                            ...(memory.scope === 'profile' && {profileId: currentProfileId})
                           })}
                         >
                           Edit
@@ -434,7 +420,7 @@ export const MemoryModal = ({
                           variant="ghost"
                           size="xs"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => onDeleteMemory({
+                          onClick={() => onDeleteMemory?.({
                             id: memory.id,
                             scope: memory.scope,
                             ...(memory.scope === 'profile' && {profileId: currentProfileId})

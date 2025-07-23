@@ -10,6 +10,7 @@ import { MemoryModal } from "@/components/MemoryModal";
 import { toast } from "sonner";
 import { ChatService, ChatMessage } from "@/services/chatService";
 import { Storage } from "@/utils/storage";
+import { getMemories as dbGetMemories, deleteMemory as dbDeleteMemory, updateMemory as dbUpdateMemory, MemoryItem } from "@/js/db-utils";
 
 function weatherCodeToText(code: number): string {
   const map: Record<number, string> = {
@@ -87,6 +88,7 @@ const Index = () => {
   const [showProfiles, setShowProfiles] = useState(false);
   const [showMemory, setShowMemory] = useState(false);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [memories, setMemories] = useState<MemoryItem[]>([]);
   const chatBodyRef = useRef<HTMLDivElement>(null);
 
   // Initialize default profiles and load data
@@ -157,6 +159,7 @@ const Index = () => {
         const profile = profiles.find(p => p.id === savedProfileId);
         if (profile) {
           setCurrentProfile(profile);
+          loadMemories(profile.id);
           return;
         }
       }
@@ -164,8 +167,14 @@ const Index = () => {
       if (profiles.length > 0) {
         setCurrentProfile(profiles[0]);
         localStorage.setItem('vivica-current-profile', profiles[0].id);
+        loadMemories(profiles[0].id);
       }
     }
+  };
+
+  const loadMemories = async (profileId?: string) => {
+    const list = await dbGetMemories(profileId);
+    setMemories(list);
   };
 
   const loadConversations = () => {
@@ -215,15 +224,16 @@ const Index = () => {
   const handleProfileChange = (profile: Profile) => {
     setCurrentProfile(profile);
     localStorage.setItem('vivica-current-profile', profile.id);
+    loadMemories(profile.id);
     toast.success(`Switched to ${profile.name} profile`);
   };
 
-  const getMemoryPrompt = () => {
+  const getMemoryPrompt = async () => {
     const memoryActive = localStorage.getItem('vivica-memory-active');
-    const savedMemory = localStorage.getItem('vivica-memory');
-    
-    if (memoryActive === 'true' && savedMemory) {
-      const memory = JSON.parse(savedMemory);
+    const profileId = localStorage.getItem('vivica-current-profile') || undefined;
+    const memory = await loadMemorySettings(profileId || 'global');
+
+    if (memoryActive === 'true' && memory) {
       let prompt = "";
       
       if (memory.identity?.name) {
@@ -306,7 +316,7 @@ const Index = () => {
 
   const buildSystemPrompt = async () => {
     const profilePrompt = currentProfile?.systemPrompt || 'You are a helpful AI assistant.';
-    const memoryPrompt = getMemoryPrompt();
+    const memoryPrompt = await getMemoryPrompt();
     const settings = Storage.get('vivica-settings', { includeWeather: false });
 
     let prompt = profilePrompt;
@@ -513,16 +523,31 @@ const Index = () => {
   };
 
   const handleRenameConversation = (conversationId: string, newTitle: string) => {
-    const updatedConversations = conversations.map(conv => 
+    const updatedConversations = conversations.map(conv =>
       conv.id === conversationId ? { ...conv, title: newTitle } : conv
     );
     setConversations(updatedConversations);
-    
+
     if (currentConversation?.id === conversationId) {
       setCurrentConversation({ ...currentConversation, title: newTitle });
     }
-    
+
     toast.success("Conversation renamed");
+  };
+
+  const handleDeleteMemory = async (memory: MemoryItem) => {
+    await dbDeleteMemory(memory.id);
+    loadMemories(currentProfile?.id);
+    toast.success('Memory deleted');
+  };
+
+  const handleEditMemory = async (memory: MemoryItem) => {
+    const newContent = prompt('Edit memory', memory.content);
+    if (newContent !== null) {
+      await dbUpdateMemory({ ...memory, content: newContent });
+      loadMemories(currentProfile?.id);
+      toast.success('Memory updated');
+    }
   };
 
   console.log("Index component state:", {
@@ -599,6 +624,9 @@ const Index = () => {
       <MemoryModal
         isOpen={showMemory}
         onClose={() => setShowMemory(false)}
+        memories={memories}
+        onDeleteMemory={handleDeleteMemory}
+        onEditMemory={handleEditMemory}
       />
     </div>
   );
