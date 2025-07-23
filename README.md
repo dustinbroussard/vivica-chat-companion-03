@@ -41,7 +41,7 @@
   - Up-to-the-minute local weather in the sidebar/welcome screen.
 
 - **Animated RSS News Ticker:**
-  - Scrolls through the latest headlines from your chosen (or default CNN US) RSS feed.
+  - Scrolls through the latest headlines from your chosen (or default ABC News) RSS feed.
   - Click a headline to inject it into chat—Vivica now fetches the full article via a CORS proxy,
     cleans it with the Readability algorithm, and then summarizes it with her usual flair.
 

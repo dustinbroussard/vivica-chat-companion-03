@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Loader2, ExternalLink } from 'lucide-react';
 import { fetchArticleText } from '@/services/rssService';
+import { DEFAULT_RSS_FEED } from '@/utils/constants';
 
 interface Headline {
   title: string;
@@ -12,7 +13,7 @@ interface Headline {
   source?: string;
 }
 
-const DEFAULT_FEED = 'https://rss.cnn.com/rss/cnn_us.rss';
+const DEFAULT_FEED = DEFAULT_RSS_FEED;
 
 // Fetch RSS feeds via a CORS proxy and return basic info for each item.
 async function fetchRSSSummariesWithLinks(urls: string[]): Promise<Headline[]> {
