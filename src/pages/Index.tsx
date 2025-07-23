@@ -12,7 +12,7 @@ import { ChatService, ChatMessage } from "@/services/chatService";
 import { searchBrave } from "@/services/searchService";
 import { Storage } from "@/utils/storage";
 import { fetchRSSHeadlines } from "@/services/rssService";
-import { getMemories } from "@/utils/memoryUtils";
+import { getMemories, saveConversationMemory } from "@/utils/memoryUtils";
 
 function weatherCodeToText(code: number): string {
   const map: Record<number, string> = {
@@ -663,7 +663,7 @@ const Index = () => {
   };
 
   const handleRenameConversation = (conversationId: string, newTitle: string) => {
-    const updatedConversations = conversations.map(conv => 
+    const updatedConversations = conversations.map(conv =>
       conv.id === conversationId ? { ...conv, title: newTitle } : conv
     );
     setConversations(updatedConversations);
@@ -673,6 +673,38 @@ const Index = () => {
     }
     
     toast.success("Conversation renamed");
+  };
+
+  /**
+   * Summarize the active conversation and store it in IndexedDB.
+   * Utilizes saveConversationMemory which calls the model to
+   * produce a short recap in Vivica's voice.
+   */
+  const handleSaveSummary = async () => {
+    if (!currentConversation || !currentProfile) return;
+
+    const apiKey = localStorage.getItem('openrouter-api-key');
+    if (!apiKey) {
+      toast.error('Please set your OpenRouter API key in Settings.');
+      return;
+    }
+
+    const messages: ChatMessage[] = currentConversation.messages.map(m => ({
+      role: m.role,
+      content: m.content
+    }));
+
+    try {
+      await saveConversationMemory(
+        messages,
+        currentProfile.model,
+        apiKey,
+        'profile',
+        currentProfile.id
+      );
+    } catch (e) {
+      // errors are surfaced via toast in saveConversationMemory
+    }
   };
 
   console.log("Index component state:", {
@@ -705,6 +737,7 @@ const Index = () => {
           currentProfile={currentProfile}
           onProfileChange={handleProfileChange}
           onOpenProfiles={() => setShowProfiles(true)}
+          onSaveSummary={handleSaveSummary}
         />
         
         <ChatBody
