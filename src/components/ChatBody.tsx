@@ -15,6 +15,7 @@ interface Message {
   role: 'user' | 'assistant';
   timestamp: Date;
   failed?: boolean;
+  isCodeResponse?: boolean;
 }
 
 interface Conversation {
@@ -96,7 +97,9 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
                     </div>
                   )}
                   
-                  <div className={`message-bubble ${message.role} ${message.failed ? 'border-accent/50 bg-accent/10' : ''}`}>
+                  <div className={`message-bubble ${message.role} ${
+                    message.failed ? 'border-accent/50 bg-accent/10' : ''
+                  } ${message.isCodeResponse ? 'code-bubble' : ''}`}>
                     <div className="prose prose-invert break-words max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {message.content}
@@ -104,9 +107,13 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
                     </div>
                     
                     <div className="flex items-center justify-between mt-2">
-                      <div className={`text-xs opacity-60 ${
+                      <div className={`flex items-center gap-2 text-xs opacity-60 ${
                         message.role === 'user' ? 'text-right' : 'text-left'
                       }`}>
+                        {message.isCodeResponse && (
+                          <span className="inline-block w-2 h-2 rounded-full bg-blue-500/70" 
+                                title="Code response" />
+                        )}
                         {formatTimestamp(message.timestamp)}
                       </div>
                       
