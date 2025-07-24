@@ -12,7 +12,7 @@ const manifest = JSON.parse(
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: '/vivica-chat-companion-03/',
+  base: './',
   server: {
     host: "::",
     port: 8080,
