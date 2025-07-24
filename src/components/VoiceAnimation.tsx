@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { X, Mic, StopCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { voiceAnimation } from "@/js/voice-animation";
 import { 
@@ -32,8 +32,12 @@ export const VoiceAnimation = ({
   buildSystemPrompt,
   onSendMessage
 }: VoiceAnimationProps) => {
-  const [voiceState, setVoiceState] = useState<VoiceState>('listening');
-  const [unsupported] = useState(false);
+  // Current state reported by the voice API (idle, listening, etc)
+  const [voiceState, setVoiceState] = useState<VoiceState>('idle');
+  // Track whether recognition is actually listening
+  const [isListeningState, setIsListeningState] = useState(false);
+  // Whether Web Speech API is available
+  const [unsupported, setUnsupported] = useState(false);
 
   const handleClose = () => {
     voiceAnimation.setState('idle');
@@ -43,6 +47,21 @@ export const VoiceAnimation = ({
     onClose();
   };
 
+  // Toggle recognition on or off and update UI immediately
+  const handleToggleListening = () => {
+    if (getIsListening()) {
+      setVoiceState('idle');
+      setIsListeningState(false);
+      voiceAnimation.setState('idle');
+      stopListening();
+    } else {
+      setVoiceState('listening');
+      setIsListeningState(true);
+      voiceAnimation.setState('listening');
+      startListening();
+    }
+  };
+
   useEffect(() => {
     if (!isVisible) {
       voiceAnimation.hide();
@@ -50,14 +69,25 @@ export const VoiceAnimation = ({
       return;
     }
 
+    const supported =
+      'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
+    if (!supported) {
+      setUnsupported(true);
+      voiceAnimation.hide();
+      stopListening();
+      return;
+    }
+    setUnsupported(false);
+
     // Initialize voice mode with callbacks
     voiceAnimation.show();
-    voiceAnimation.setState('listening');
+    voiceAnimation.setState('idle');
     
     updateVoiceModeConfig({
       onListenStateChange: (state) => {
         voiceAnimation.setState(state);
         setVoiceState(state);
+        setIsListeningState(state === 'listening');
       },
       onVisualizerData: voiceAnimation.updateVolume,
       onSpeechResult: (text, isFinal) => {
@@ -77,6 +107,7 @@ export const VoiceAnimation = ({
     return () => {
       voiceAnimation.hide();
       stopListening();
+      setIsListeningState(false);
     };
   }, [isVisible, currentProfile, buildSystemPrompt, onSendMessage]);
 
@@ -132,13 +163,28 @@ export const VoiceAnimation = ({
       >
         <X className="w-6 h-6" />
       </Button>
-      <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 text-center">
-        <h2 className="text-4xl font-bold text-white tracking-wide mb-2">
-          {String(currentProfile?.name || 'Vivica').toUpperCase()}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 px-4 text-center w-full max-w-xs">
+        <h2 className="text-xl font-semibold text-white whitespace-nowrap overflow-hidden text-ellipsis">
+          {currentProfile?.name || 'Vivica'}
         </h2>
-        <p className={`text-lg ${getStateColor(voiceState)}`}>{getStateLabel(voiceState)}</p>
+        <Button
+          variant="outline"
+          onClick={handleToggleListening}
+          className="bg-white/10 border-white/30 text-white hover:bg-white/20 flex items-center gap-2"
+        >
+          {isListeningState ? (
+            <>
+              <StopCircle className="w-4 h-4" /> Stop Listening
+            </>
+          ) : (
+            <>
+              <Mic className="w-4 h-4" /> Start Listening
+            </>
+          )}
+        </Button>
+        <p className={`text-sm ${getStateColor(voiceState)}`}>{getStateLabel(voiceState)}</p>
         {voiceState === 'speaking' && (
-          <div className="mt-2 flex justify-center">
+          <div className="mt-1 flex justify-center">
             <div className="flex gap-1">
               {[...Array(5)].map((_, i) => (
                 <div
@@ -153,21 +199,6 @@ export const VoiceAnimation = ({
             </div>
           </div>
         )}
-      </div>
-      <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 flex gap-4">
-        <Button
-          variant="outline"
-          onClick={() => {
-            if (getIsListening()) {
-              stopListening();
-            } else {
-              startListening();
-            }
-          }}
-          className="bg-white/10 border-white/30 text-white hover:bg-white/20"
-        >
-          {voiceState === 'listening' ? 'Stop Listening' : 'Start Listening'}
-        </Button>
       </div>
     </>
   );
