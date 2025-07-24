@@ -17,9 +17,10 @@
   - Choose your own AI model for each profile.
   - Assign a specialized coder model (like `qwen/qwen-2.5-coder-32b-instruct:free`) for programming questions, with seamless handoff to Vivica for human-style delivery.
 
-- **Voice Mode (with Custom Animation):**  
+- **Voice Mode (with Custom Animation):**
   - Beautiful orb animation for speech recognition and text-to-speech.
   - VoiceMode is responsive, visually dynamic, and designed to *feel* like a real companion—not just a boring mic button.
+  - After Vivica speaks, listening automatically resumes so conversations flow naturally.
 
 - **Memory System (Knowledge Base):**  
   - **Global memory**: persistent knowledge shared by all profiles.
