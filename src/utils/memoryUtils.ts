@@ -105,7 +105,8 @@ export async function saveConversationMemory(
     : "This is a global memory - keep it broadly applicable to all personas.";
 
   const messageCount = messages.length;
-  const charLimit = messageCount < 10 ? 150 : messageCount <= 30 ? 300 : 600;
+  // Allow more generous memory summaries based on conversation length
+  const charLimit = messageCount < 10 ? 250 : messageCount <= 30 ? 500 : 1000;
 
   const prompt = `
   As Vivica, create a ${scope} memory from this conversation.
