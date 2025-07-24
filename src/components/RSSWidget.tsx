@@ -3,6 +3,7 @@ import { Storage } from '@/utils/storage';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Loader2, ExternalLink } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { fetchArticleText } from '@/services/rssService';
 import { DEFAULT_RSS_FEED } from '@/utils/constants';
 
@@ -180,22 +181,28 @@ export const RSSWidget = ({ onSendMessage, onNewChat }: RSSWidgetProps) => {
       <div className="text-sm transition-opacity duration-300" style={{ opacity }}>
         <Button
           variant="ghost"
-          className="w-full h-auto p-0 text-foreground hover:text-accent justify-start gap-2 relative"
+          className="relative w-full h-auto p-0 text-foreground hover:text-accent justify-start gap-2"
           onClick={handleHeadlineClick}
           disabled={injecting}
           aria-busy={injecting}
         >
-          {injecting ? (
-            <Loader2 className="w-4 h-4 animate-spin text-accent" />
-          ) : (
-            <>
-              <span className="shrink-0">📰</span>
-              <span className="truncate text-left">{currentHeadline.title}</span>
-              {currentHeadline.link.startsWith('http') && (
-                <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-70 ml-auto" />
-              )}
-            </>
+          <span className={cn(injecting && 'opacity-0', 'flex items-center gap-2 w-full')}
+            aria-hidden={injecting}
+          >
+            <span className="shrink-0">📰</span>
+            <span className="truncate text-left">{currentHeadline.title}</span>
+            {currentHeadline.link.startsWith('http') && (
+              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-70 ml-auto" />
+            )}
+          </span>
+          {injecting && (
+            <span className="absolute inset-0 flex items-center justify-center bg-background/70 rounded-md" aria-hidden="true">
+              <Loader2 className="w-4 h-4 animate-spin text-accent" />
+            </span>
           )}
+          <span className="sr-only">
+            {injecting ? 'Injecting headline…' : 'Inject RSS headline'}
+          </span>
         </Button>
       </div>
     </div>

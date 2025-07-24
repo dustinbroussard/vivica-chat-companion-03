@@ -2,6 +2,7 @@
 import { Menu, Sun, Moon, Bookmark, Sparkles, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ProfileSwitcher } from "./ProfileSwitcher";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -80,12 +81,20 @@ export const ChatHeader = ({
           title="Save & Summarize conversation"
           disabled={saving}
           aria-busy={saving}
+          className="relative"
         >
-          {saving ? (
-            <Loader2 className="w-4 h-4 animate-spin text-accent" />
-          ) : (
-            <Bookmark className="w-4 h-4" />
+          <Bookmark className={cn('w-4 h-4', saving && 'opacity-0')} />
+          {saving && (
+            <span
+              className="absolute inset-0 flex items-center justify-center bg-background/70 rounded-md"
+              aria-hidden="true"
+            >
+              <Loader2 className="w-4 h-4 animate-spin text-accent" />
+            </span>
           )}
+          <span className="sr-only">
+            {saving ? 'Saving conversation…' : 'Save & Summarize conversation'}
+          </span>
         </Button>
         <Button variant="ghost" size="icon" onClick={toggleVariant}>
           {variant === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
