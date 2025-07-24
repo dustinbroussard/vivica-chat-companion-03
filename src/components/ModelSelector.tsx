@@ -105,7 +105,7 @@ export const ModelSelector = ({ value, onValueChange, placeholder = "Select a mo
       <PopoverContent className="w-full p-0 max-w-sm" align="start">
         <Command>
           <CommandInput placeholder="Search models..." className="h-9" />
-          <CommandList className="max-h-[60vh]">
+          <CommandList className="max-h-[60vh] overflow-y-auto touch-pan-y">
             <CommandEmpty>No models found.</CommandEmpty>
             {groupedModels.map(({ provider, models: providerModels }) => (
               <CommandGroup key={provider} heading={provider.charAt(0).toUpperCase() + provider.slice(1)}>
