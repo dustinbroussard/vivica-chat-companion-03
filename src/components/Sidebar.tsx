@@ -128,14 +128,27 @@ export const Sidebar = ({
                 <img src={logoSrc} alt="Vivica" className="w-8 h-8" />
                 <span className="font-semibold">Vivica</span>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="md:hidden"
-              >
-                <X className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  title="Regenerate title"
+                  disabled={!currentConversation}
+                  onClick={() =>
+                    currentConversation && onGenerateTitle(currentConversation)
+                  }
+                >
+                  <Sparkles className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClose}
+                  className="md:hidden"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
             
             <Button

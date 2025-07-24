@@ -798,7 +798,6 @@ const Index = () => {
           onProfileChange={handleProfileChange}
           onOpenProfiles={() => setShowProfiles(true)}
           onSaveSummary={handleSaveSummary}
-          onGenerateTitle={() => handleGenerateTitle(currentConversation || undefined)}
         />
         
         <ChatBody
