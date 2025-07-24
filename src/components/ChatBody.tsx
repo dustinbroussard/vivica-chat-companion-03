@@ -1,5 +1,5 @@
 
-import { forwardRef, useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useRef, useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { RotateCcw, Copy, Pencil } from "lucide-react";
@@ -12,7 +12,7 @@ import { WeatherWidget } from "@/components/WeatherWidget";
 import { RSSWidget } from "@/components/RSSWidget";
 import { ChatService, ChatMessage } from "@/services/chatService";
 import { Storage } from "@/utils/storage";
-import { getCachedWelcomeMessages, saveWelcomeMessage } from "@/utils/indexedDb";
+import { saveWelcomeMessage } from "@/utils/indexedDb";
 
 const getUserName = () => {
   try {
@@ -80,8 +80,60 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
     const { color, variant } = useTheme();
     const logoSrc = `/logo-${color}${variant}.png`;
     const [welcomeMsg, setWelcomeMsg] = useState('');
+    const [welcomeError, setWelcomeError] = useState(false);
     const [animateWelcome, setAnimateWelcome] = useState(false);
     const lastWelcomeRef = useRef('');
+
+    const fetchWelcome = useCallback(async () => {
+      if (!conversation || conversation.messages.length) return;
+
+      setWelcomeError(false);
+
+      const getFresh = async () => {
+        const raw = localStorage.getItem('vivica-profiles') || '[]';
+        const profiles = JSON.parse(raw) as ProfileBrief[];
+        const vivica = profiles.find(p => p.isVivica) || Storage.createVivicaProfile();
+
+        const apiKey = localStorage.getItem('openrouter-api-key');
+        if (!apiKey) throw new Error('missing api key');
+
+        const chatService = new ChatService(apiKey);
+        const systemPrompt = vivica.systemPrompt;
+        const prompt = `${systemPrompt}\n\nGive me a single, short, witty, and slightly unpredictable welcome message as Vivica. Make it snarky, playful, or a little challenging, but never mention being an AI. Don’t repeat past responses.`;
+
+        const reqMessages: ChatMessage[] = [{ role: 'system', content: prompt }];
+        const res = await chatService.sendMessage({
+          model: vivica.model,
+          messages: reqMessages,
+          temperature: vivica.temperature,
+          max_tokens: 60,
+        });
+        const data = await res.json();
+        return data.choices?.[0]?.message?.content?.trim();
+      };
+
+      try {
+        let text = await getFresh();
+        let attempts = 0;
+        while (text && text === lastWelcomeRef.current && attempts < 2) {
+          text = await getFresh();
+          attempts++;
+        }
+
+        if (text) {
+          lastWelcomeRef.current = text;
+          setWelcomeMsg(text);
+          saveWelcomeMessage(text);
+          setAnimateWelcome(true);
+          return;
+        }
+
+        throw new Error('empty');
+      } catch {
+        setWelcomeError(true);
+        setWelcomeMsg('');
+      }
+    }, [conversation?.id, conversation?.messages.length]);
 
     const scrollToBottom = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -101,61 +153,6 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
     useEffect(() => {
       if (!conversation || conversation.messages.length) return;
 
-      const fetchWelcome = async () => {
-        if (conversation?.messages.length) return;
-
-        const getFresh = async () => {
-          const raw = localStorage.getItem('vivica-profiles') || '[]';
-          const profiles = JSON.parse(raw) as ProfileBrief[];
-          const vivica = profiles.find(p => p.isVivica) || Storage.createVivicaProfile();
-
-          const apiKey = localStorage.getItem('openrouter-api-key');
-          if (!apiKey) throw new Error('missing api key');
-
-          const chatService = new ChatService(apiKey);
-          const systemPrompt = vivica.systemPrompt;
-          const prompt = `${systemPrompt}\n\nGive me a single, short, witty, and slightly unpredictable welcome message as Vivica. Make it snarky, playful, or a little challenging, but never mention being an AI. Don’t repeat past responses.`;
-
-          const reqMessages: ChatMessage[] = [{ role: 'system', content: prompt }];
-          const res = await chatService.sendMessage({
-            model: vivica.model,
-            messages: reqMessages,
-            temperature: vivica.temperature,
-            max_tokens: 60,
-          });
-          const data = await res.json();
-          return data.choices?.[0]?.message?.content?.trim();
-        };
-
-        try {
-          let text = await getFresh();
-          if (text && text === lastWelcomeRef.current) {
-            text = await getFresh();
-          }
-
-          if (text) {
-            lastWelcomeRef.current = text;
-            setWelcomeMsg(text);
-            saveWelcomeMessage(text);
-            setAnimateWelcome(true);
-            return;
-          }
-        } catch {
-          // Ignore and fall back to cache
-        }
-
-        const cached = await getCachedWelcomeMessages();
-        const fallback = cached[cached.length - 1]?.text || 'Well, well. Look who finally showed up.';
-        if (fallback !== lastWelcomeRef.current) {
-          lastWelcomeRef.current = fallback;
-          setWelcomeMsg(fallback);
-          setAnimateWelcome(true);
-        } else {
-          setWelcomeMsg(fallback);
-          setAnimateWelcome(true);
-        }
-      };
-
       fetchWelcome();
 
       const onFocus = () => fetchWelcome();
@@ -164,14 +161,12 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
       };
       window.addEventListener('focus', onFocus);
       document.addEventListener('visibilitychange', onVisibility);
-      const interval = window.setInterval(fetchWelcome, 20000);
 
       return () => {
         window.removeEventListener('focus', onFocus);
         document.removeEventListener('visibilitychange', onVisibility);
-        clearInterval(interval);
       };
-    }, [conversation?.id, conversation?.messages.length]);
+    }, [conversation?.id, conversation?.messages.length, fetchWelcome]);
 
     useEffect(() => {
       if (!welcomeMsg) return;
@@ -205,8 +200,11 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
             <div className="space-y-4">
               <img src={logoSrc} alt="Vivica" className="w-40 h-40 mx-auto" />
               <h2 className="text-3xl font-bold">Welcome to Vivica</h2>
-              <p className={`text-lg text-muted-foreground ${animateWelcome ? 'fade-in slide-up' : ''}`}>
-                {welcomeMsg || 'Start a new conversation to begin'}
+              <p
+                onClick={() => welcomeError && fetchWelcome()}
+                className={`text-lg text-muted-foreground ${animateWelcome ? 'fade-in slide-up' : ''} ${welcomeError ? 'cursor-pointer' : ''}`}
+              >
+                {welcomeError ? "Couldn't load Vivica's welcome. Tap to retry." : (welcomeMsg || '')}
               </p>
             </div>
 
