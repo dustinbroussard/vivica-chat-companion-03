@@ -61,6 +61,10 @@ let silenceTimer; // Timer to detect prolonged silence
 const SILENCE_TIMEOUT = 3000; // 3 seconds of silence to stop recognition
 let handledSpeech = false; // Flag to track if we've processed speech already
 
+// Track whether the overall voice mode UI is active. Used to
+// determine if recognition should auto-restart when it ends.
+let voiceModeActive = false;
+
 // Audio visualization variables
 let audioCtx = null;
 let analyser = null;
@@ -103,6 +107,16 @@ export function setProcessingState(state) {
 export function setCurrentConversationId(id) {
     vivicaVoiceModeConfig.conversationId = id;
     debugLog('Current conversation ID set to:', id);
+}
+
+// Track whether the voice mode interface is active
+export function setVoiceModeActive(active) {
+    voiceModeActive = active;
+    debugLog('Voice mode active:', active);
+}
+
+export function getVoiceModeActive() {
+    return voiceModeActive;
 }
 
 /**

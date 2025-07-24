@@ -14,6 +14,7 @@ import { searchBrave } from "@/services/searchService";
 import { Storage } from "@/utils/storage";
 import { fetchRSSHeadlines } from "@/services/rssService";
 import { getMemories, saveConversationMemory } from "@/utils/memoryUtils";
+import { setVoiceModeActive } from "@/js/voice-mode";
 
 function weatherCodeToText(code: number): string {
   const map: Record<number, string> = {
@@ -671,8 +672,10 @@ const Index = () => {
 
 
   const handleVoiceToggle = () => {
-    setIsVoiceMode(!isVoiceMode);
-    if (!isVoiceMode) {
+    const newState = !isVoiceMode;
+    setIsVoiceMode(newState);
+    setVoiceModeActive(newState);
+    if (newState) {
       setShowVoiceAnimation(true);
       toast.success("Voice mode activated");
     } else {
@@ -870,6 +873,7 @@ const Index = () => {
           onClose={() => {
             setShowVoiceAnimation(false);
             setIsVoiceMode(false);
+            setVoiceModeActive(false);
           }}
           currentProfile={currentProfile}
           getMemoryPrompt={getMemoryPrompt}
