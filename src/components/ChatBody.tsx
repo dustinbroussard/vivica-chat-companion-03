@@ -3,6 +3,7 @@ import { forwardRef, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { RotateCcw, Copy, Pencil } from "lucide-react";
+import { CodeBlock } from "./CodeBlock";
 import { Button } from "@/components/ui/button";
 import { FaUser, FaRobot } from "react-icons/fa";
 import { useTheme } from "@/hooks/useTheme";
@@ -154,16 +155,6 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
       });
     };
 
-    /**
-     * Determine if a message should be styled as code.
-     * Treat responses flagged as code or containing common
-     * code block markers as code messages.
-     */
-    const isCodeMessage = (msg: Message) => {
-      if (msg.isCodeResponse) return true;
-      const text = typeof msg.content === 'string' ? msg.content : '';
-      return /```|<code>|<pre>|\bconst\b|\bfunction\b/.test(text);
-    };
 
     return (
       <div
@@ -207,10 +198,24 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
                   <div
                     className={`message-bubble ${message.role} ${
                       message.failed ? 'border-accent/50 bg-accent/10' : ''
-                    } ${isCodeMessage(message) ? 'code-bubble' : ''}`}
+                    }`}
                   >
                     <div className="prose dark:prose-invert break-words max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          code({ node, inline, className, children, ...props }) {
+                            if (inline) {
+                              return (
+                                <code className="inline-code" {...props}>{children}</code>
+                              );
+                            }
+                            return (
+                              <CodeBlock className={className}>{children}</CodeBlock>
+                            );
+                          }
+                        }}
+                      >
                         {
                           // Avoid rendering raw objects like [object Object]
                           // If the message content isn't a string, log it and
