@@ -261,7 +261,7 @@ function initSpeechRecognition() {
 
         recognition.onresult = (event) => {
             if (handledSpeech) return; // Ignore duplicate results
-            
+
             resetSilenceTimer(); // Reset on any speech input
             let interimTranscript = '';
             let finalTranscript = '';
@@ -273,13 +273,15 @@ function initSpeechRecognition() {
                     interimTranscript += event.results[i][0].transcript;
                 }
             }
-            
+
             if (finalTranscript) {
                 handledSpeech = true;
                 debugLog('Final speech result:', finalTranscript);
                 let retryBtn = document.getElementById('voice-retry-btn');
                 if (retryBtn) retryBtn.style.display = 'none';
                 vivicaVoiceModeConfig.onSpeechResult(finalTranscript.trim(), true);
+                // Stop listening once we have a final result
+                stopListening();
             } else {
                 debugLog('Interim speech result:', interimTranscript);
                 vivicaVoiceModeConfig.onSpeechResult(interimTranscript.trim(), false);
@@ -287,33 +289,15 @@ function initSpeechRecognition() {
         };
 
         recognition.onerror = function(event) {
-            setState('error');
-            let retryBtn = document.getElementById('voice-retry-btn');
-            if (!retryBtn) {
-                retryBtn = document.createElement('button');
-                retryBtn.id = 'voice-retry-btn';
-                retryBtn.innerHTML = '<i class="fas fa-microphone"></i> Tap to Retry';
-                Object.assign(retryBtn.style, {
-                    position: 'fixed',
-                    bottom: '90px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: 'rgba(60,0,80,0.95)',
-                    color: '#fff',
-                    fontSize: '1.2em',
-                    border: 'none',
-                    borderRadius: '18px',
-                    padding: '14px 28px',
-                    zIndex: 9999,
-                    boxShadow: '0 0 20px #b05cff90',
-                });
-                retryBtn.onclick = function() {
-                    retryBtn.style.display = 'none';
-                    try { recognition.start(); } catch (e) {}
-                };
-                document.body.appendChild(retryBtn);
-            } else {
-                retryBtn.style.display = 'block';
+            debugLog('Speech recognition error:', event.error);
+            isListening = false;
+            handledSpeech = false;
+            clearSilenceTimer();
+            vivicaVoiceModeConfig.onSpeechError(event.error);
+            vivicaVoiceModeConfig.onListenStateChange('idle');
+            stopAudioVisualization();
+            if (window.showToast) {
+                window.showToast('Voice error: ' + event.error, 'error');
             }
         };
 
@@ -325,9 +309,7 @@ function initSpeechRecognition() {
             vivicaVoiceModeConfig.onSpeechEnd();
             vivicaVoiceModeConfig.onListenStateChange('idle');
             stopAudioVisualization();
-            if (voiceModeActive && shouldRestartRecognition()) {
-                setTimeout(() => recognition.start(), 500);
-            }
+            // Do not automatically restart recognition
         };
 
     } else {
@@ -337,27 +319,29 @@ function initSpeechRecognition() {
 }
 
 /**
- * Starts speech recognition.
+ * Starts speech recognition and requests microphone access if needed.
  */
-export function startListening() {
+export async function startListening() {
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
         if (window.showToast) window.showToast('Voice mode not supported on this device/browser.');
         return;
     }
+    if (!recognition) {
+        initSpeechRecognition();
+    }
     if (recognition && !isListening) {
         try {
+            // Request mic permission via the visualizer setup
+            await startAudioVisualization();
             recognition.start();
             debugLog('Listening started.');
-            startAudioVisualization();
         } catch (e) {
             console.error('Failed to start recognition:', e);
             vivicaVoiceModeConfig.onSpeechError(e);
             vivicaVoiceModeConfig.onListenStateChange('idle');
+            stopAudioVisualization();
             if (window.showToast) window.showToast('Voice error: ' + e.message, 'error');
         }
-    } else if (!recognition) {
-        initSpeechRecognition(); // Initialize if not already
-        if (recognition) startListening(); // Try again after init
     }
 }
 
@@ -368,8 +352,10 @@ export function stopListening() {
     if (recognition && isListening) {
         recognition.stop();
         debugLog('Listening stopped.');
+        isListening = false;
         clearSilenceTimer();
         stopAudioVisualization();
+        vivicaVoiceModeConfig.onListenStateChange('idle');
     }
 }
 
@@ -480,13 +466,7 @@ export function speak(text) {
             vivicaVoiceModeConfig.onListenStateChange('idle');
             setProcessingState(false);
             resolve();
-
-            // Auto-restart listening after speech ends
-            if (recognition && !shouldRestartRecognition()) {
-                setTimeout(() => recognition.start(), 500);
-                return;
-            }
-            restartRecognition();
+            // Listening will only restart if the user clicks start again
         };
 
         currentSpeechUtterance.onerror = (event) => {
@@ -551,20 +531,4 @@ export function initVoiceMode(initialConfig = {}) {
 
 function setState(state) {
     vivicaVoiceModeConfig.onListenStateChange(state);
-}
-
-// Helper functions for recognition restart logic
-function shouldRestartRecognition() {
-    return !isProcessing && !isSpeaking && !window.modalOpen;
-}
-
-function restartRecognition() {
-    try {
-        if (recognition) {
-            setState('listening');
-            recognition.start();
-        }
-    } catch (e) {
-        console.log('Recognition restart failed:', e);
-    }
 }
