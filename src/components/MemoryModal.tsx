@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Brain, Save, RotateCcw, FileDown, FileUp } from "lucide-react";
+import { FaEdit, FaTrash } from "react-icons/fa";
 import {
   Dialog,
   DialogContent,
@@ -464,7 +465,7 @@ export const MemoryModal = ({
                           size="xs"
                           onClick={() => handleEdit(entry)}
                         >
-                          Edit
+                          <FaEdit className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -472,7 +473,7 @@ export const MemoryModal = ({
                           className="text-destructive hover:text-destructive"
                           onClick={() => handleDelete({ id: entry.id })}
                         >
-                          Delete
+                          <FaTrash className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
