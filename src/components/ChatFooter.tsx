@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Mic, MicOff, Paperclip } from "lucide-react";
+import { Send, Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -80,19 +80,10 @@ export const ChatFooter = ({ onSendMessage, onVoiceToggle, isVoiceMode, editingM
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type your message..."
-              className="min-h-[44px] max-h-[120px] resize-none pr-12 bg-background border-input"
+              className="min-h-[44px] max-h-[120px] resize-none pr-3 bg-background border-input"
               disabled={isVoiceMode}
             />
             
-            {/* Attachment button */}
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 bottom-2 h-8 w-8"
-            >
-              <Paperclip className="w-4 h-4" />
-            </Button>
           </div>
 
           {/* Send Button */}
