@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { ChatHeader } from "@/components/ChatHeader";
 import { ChatBody } from "@/components/ChatBody";
 import { ChatFooter } from "@/components/ChatFooter";
+import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
 import { VoiceAnimation } from "@/components/VoiceAnimation";
 import { SettingsModal } from "@/components/SettingsModal";
 import { ProfilesModal } from "@/components/ProfilesModal";
@@ -94,6 +95,7 @@ const Index = () => {
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const chatBodyRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   // Initialize default profiles and load data
   useEffect(() => {
@@ -107,6 +109,33 @@ const Index = () => {
     window.addEventListener('profilesUpdated', handler);
     return () => window.removeEventListener('profilesUpdated', handler);
   }, []);
+
+  // Show/hide the scroll-to-bottom button based on scroll position
+  useEffect(() => {
+    const el = chatBodyRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const atBottom =
+        el.scrollHeight - el.scrollTop <= el.clientHeight + 20;
+      if (atBottom) setShowScrollButton(false);
+    };
+    el.addEventListener('scroll', onScroll);
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // When new messages arrive and the user isn't at the bottom, show the button
+  useEffect(() => {
+    const el = chatBodyRef.current;
+    if (!el) return;
+    const atBottom =
+      el.scrollHeight - el.scrollTop <= el.clientHeight + 20;
+    if (!atBottom) setShowScrollButton(true);
+  }, [currentConversation?.messages.length, isTyping]);
+
+  // Hide the button when switching conversations
+  useEffect(() => {
+    setShowScrollButton(false);
+  }, [currentConversation?.id]);
 
   const initializeProfiles = () => {
     const savedProfiles = localStorage.getItem('vivica-profiles');
@@ -771,6 +800,13 @@ const Index = () => {
     }
   };
 
+  const handleScrollToBottom = () => {
+    const el = chatBodyRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    setShowScrollButton(false);
+  };
+
   console.log("Index component state:", {
     sidebarOpen,
     currentConversation: currentConversation?.id,
@@ -795,7 +831,7 @@ const Index = () => {
         onOpenMemory={() => setShowMemory(true)}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 relative">
         <ChatHeader
           onMenuToggle={() => setSidebarOpen(true)}
           currentTitle={currentConversation?.title || "Vivica"}
@@ -814,6 +850,11 @@ const Index = () => {
           onEditMessage={handleStartEditMessage}
           onSendMessage={handleSendMessage}
           onNewChat={handleNewChat}
+        />
+
+        <ScrollToBottomButton
+          visible={showScrollButton}
+          onClick={handleScrollToBottom}
         />
 
         <ChatFooter

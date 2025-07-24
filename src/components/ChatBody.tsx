@@ -162,7 +162,7 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
     return (
       <div
         ref={ref}
-        className="flex-1 overflow-y-auto p-4 space-y-6"
+        className="flex-1 overflow-y-auto p-4 space-y-6 relative"
       >
         {!conversation?.messages.length ? (
           // Empty state
