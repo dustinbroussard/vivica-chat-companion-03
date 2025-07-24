@@ -91,7 +91,7 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
       const el = (ref as React.RefObject<HTMLDivElement>)?.current;
       if (!el) return;
       const atBottom =
-        el.scrollHeight - el.scrollTop <= el.clientHeight + 20;
+        el.scrollHeight - el.scrollTop <= el.clientHeight + 16;
       if (atBottom) scrollToBottom();
     }, [conversation?.messages, isTyping]);
 

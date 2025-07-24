@@ -117,8 +117,8 @@ const Index = () => {
     if (!el) return;
     const onScroll = () => {
       const atBottom =
-        el.scrollHeight - el.scrollTop <= el.clientHeight + 20;
-      if (atBottom) setShowScrollButton(false);
+        el.scrollHeight - el.scrollTop <= el.clientHeight + 16;
+      setShowScrollButton(!atBottom);
     };
     el.addEventListener('scroll', onScroll);
     return () => el.removeEventListener('scroll', onScroll);
@@ -129,8 +129,8 @@ const Index = () => {
     const el = chatBodyRef.current;
     if (!el) return;
     const atBottom =
-      el.scrollHeight - el.scrollTop <= el.clientHeight + 20;
-    if (!atBottom) setShowScrollButton(true);
+      el.scrollHeight - el.scrollTop <= el.clientHeight + 16;
+    setShowScrollButton(!atBottom);
   }, [currentConversation?.messages.length, isTyping]);
 
   // Hide the button when switching conversations
@@ -565,7 +565,7 @@ const Index = () => {
           // near the bottom. Otherwise, show the scroll-to-bottom button.
           const el = chatBodyRef.current;
           const atBottom =
-            el.scrollHeight - el.scrollTop <= el.clientHeight + 20;
+            el.scrollHeight - el.scrollTop <= el.clientHeight + 16;
           if (atBottom) {
             el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
           }
