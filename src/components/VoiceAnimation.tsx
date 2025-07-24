@@ -47,17 +47,11 @@ export const VoiceAnimation = ({
     onClose();
   };
 
-  // Toggle recognition on or off and update UI immediately
+  // Toggle recognition on or off. UI will update via event callbacks
   const handleToggleListening = () => {
     if (getIsListening()) {
-      setVoiceState('idle');
-      setIsListeningState(false);
-      voiceAnimation.setState('idle');
       stopListening();
     } else {
-      setVoiceState('listening');
-      setIsListeningState(true);
-      voiceAnimation.setState('listening');
       startListening();
     }
   };
