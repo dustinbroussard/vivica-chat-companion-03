@@ -242,7 +242,7 @@ export const MemoryModal = ({
 
         <div className="space-y-6 py-4">
           {/* Memory Scope Filter */}
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-end justify-between gap-4">
             <div className="space-y-2">
               <Label className="text-base font-semibold">Filter Memories</Label>
               <div className="flex gap-2">
@@ -254,7 +254,7 @@ export const MemoryModal = ({
                   All
                 </Button>
                 <Button
-                  variant={scopeFilter === 'global' ? 'default' : 'outline'} 
+                  variant={scopeFilter === 'global' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setScopeFilter('global')}
                 >
@@ -262,23 +262,22 @@ export const MemoryModal = ({
                 </Button>
                 <Button
                   variant={scopeFilter === 'profile' ? 'default' : 'outline'}
-                  size="sm" 
+                  size="sm"
                   onClick={() => setScopeFilter('profile')}
                 >
                   Current Profile
                 </Button>
               </div>
             </div>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <Button
-                  variant={isActive ? "default" : "outline"}
-                  className="px-4 py-2.5 rounded-md min-w-[100px]"
-                  onClick={() => setIsActive(!isActive)}
-                >
-                  {isActive ? "Active" : "Inactive"}
-                </Button>
-              </div>
+            <div>
+              <Button
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                className="min-w-[100px]"
+                onClick={() => setIsActive(!isActive)}
+              >
+                {isActive ? "Active" : "Inactive"}
+              </Button>
             </div>
           </div>
 
