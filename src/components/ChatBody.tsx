@@ -84,8 +84,14 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
+    // Auto-scroll only when the user is already near the bottom. This allows
+    // scrolling up to read older messages without being snapped back down.
     useEffect(() => {
-      scrollToBottom();
+      const el = (ref as React.RefObject<HTMLDivElement>)?.current;
+      if (!el) return;
+      const atBottom =
+        el.scrollHeight - el.scrollTop <= el.clientHeight + 20;
+      if (atBottom) scrollToBottom();
     }, [conversation?.messages, isTyping]);
 
     // Fetch a dynamic welcome message from the LLM whenever the welcome screen appears

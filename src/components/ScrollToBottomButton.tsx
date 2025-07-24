@@ -8,8 +8,9 @@ interface ScrollToBottomButtonProps {
 }
 
 /**
- * Floating button shown when the chat is scrolled up.
- * Clicking it smoothly scrolls to the latest message.
+ * Floating button shown when the chat is scrolled up and new messages arrive.
+ * It fades in/out using Tailwind transitions and never intercepts clicks when
+ * hidden. Clicking it smoothly scrolls to the latest message.
  */
 export const ScrollToBottomButton = ({ visible, onClick }: ScrollToBottomButtonProps) => {
   return (

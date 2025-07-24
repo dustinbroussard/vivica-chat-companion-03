@@ -49,9 +49,10 @@
   - Installable on desktop and mobile.
   - Works offline, full data persistence, fast loading.
 
-- **Modern UI & Theme System:**  
+- **Modern UI & Theme System:**
   - Multiple color themes, dark/light toggle (with advanced dark themes for AMOLED screens).
   - Clean, focused layout designed for both desktop and mobile use.
+  - Floating "scroll to bottom" button appears when new messages arrive while you're reading earlier chat history.
 
 ---
 
