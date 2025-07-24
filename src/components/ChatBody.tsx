@@ -300,25 +300,6 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
               </div>
             ))}
 
-            {/* Typing indicator */}
-            {isTyping && (
-              <div className="flex justify-start slide-up">
-                <div className="flex items-start gap-3">
-                  <span className="mt-1 flex items-center gap-1 text-xs font-semibold text-primary">
-                    <FaRobot className="w-3 h-3" />
-                    {getProfileName()}
-                  </span>
-                  <div className="message-bubble assistant">
-                    <div className="typing-indicator">
-                      <div className="typing-dot"></div>
-                      <div className="typing-dot"></div>
-                      <div className="typing-dot"></div>
-                      <span className="ml-2">{getProfileName()} is typing...</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             <div ref={messagesEndRef} />
           </div>
