@@ -311,9 +311,11 @@ const Index = () => {
     }
 
     try {
-      const dbMems = await getMemories(profileId, 'all');
-      if (dbMems.length) {
-        const list = dbMems.map(m => `- ${m.content}`).join('\n');
+      const globalMems = await getMemories(undefined, 'global');
+      const profileMems = await getMemories(profileId, 'profile');
+      const combined = [...globalMems, ...profileMems];
+      if (combined.length) {
+        const list = combined.map(m => `- ${m.content}`).join('\n');
         prompt += `${prompt ? '\n\n' : ''}Stored Facts:\n${list}`;
       }
     } catch (e) {

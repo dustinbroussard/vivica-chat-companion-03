@@ -93,21 +93,26 @@ export async function clearAllMemories(): Promise<void> {
  */
 // Used by the "Save & Summarize" button in ChatHeader
 export async function saveConversationMemory(
-  messages: ChatMessage[], 
-  model: string, 
+  messages: ChatMessage[],
+  model: string,
   apiKey: string,
   scope: 'global' | 'profile' = 'global',
   profileId?: string
 ): Promise<MemoryItem> {
   // Enhanced prompt with scope awareness
-  const scopeHint = scope === 'profile' 
+  const scopeHint = scope === 'profile'
     ? "This is a persona-specific memory - focus on details relevant to this persona's specialty."
     : "This is a global memory - keep it broadly applicable to all personas.";
+
+  const messageCount = messages.length;
+  const charLimit = messageCount < 10 ? 150 : messageCount <= 30 ? 300 : 600;
 
   const prompt = `
   As Vivica, create a ${scope} memory from this conversation.
   ${scopeHint}
-  
+
+  Keep the entire summary under ${charLimit} characters.
+
   Format requirements:
   1. Start with "Summary:" followed by 1-2 sentence overview
   2. List key points as bullets
@@ -155,9 +160,13 @@ export async function saveConversationMemory(
     }
 
     // Clean up the response if it has bullet points
-    const cleanedSummary = summary
+    let cleanedSummary = summary
       .replace(/^- /mg, '• ') // Convert hyphens to bullets
       .replace(/\n\s*\n/g, '\n\n'); // Normalize spacing
+
+    if (cleanedSummary.length > charLimit) {
+      cleanedSummary = cleanedSummary.slice(0, charLimit);
+    }
 
     const memoryData = {
       id: `memory-${Date.now()}`,
