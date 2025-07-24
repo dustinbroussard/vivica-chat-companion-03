@@ -99,7 +99,7 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
 
         const chatService = new ChatService(apiKey);
         const systemPrompt = vivica.systemPrompt;
-        const prompt = `${systemPrompt}\n\nGive me a single, short, witty, and slightly unpredictable welcome message as Vivica. Make it snarky, playful, or a little challenging, but never mention being an AI. Don’t repeat past responses.`;
+        const prompt = `${systemPrompt}\n\nVivica, write a short, snarky, surprising welcome message (max 120 characters). Speak in your own voice. Never mention AI or 'assistant.' Only return the message text—no extra formatting, no meta statements, no greetings like 'Welcome.' Do not repeat the previous message.`;
 
         const reqMessages: ChatMessage[] = [{ role: 'system', content: prompt }];
         const res = await chatService.sendMessage({
@@ -115,12 +115,16 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
       try {
         let text = await getFresh();
         let attempts = 0;
-        while (text && text === lastWelcomeRef.current && attempts < 2) {
+        while (
+          text &&
+          (text === lastWelcomeRef.current || text.length > 120) &&
+          attempts < 2
+        ) {
           text = await getFresh();
           attempts++;
         }
 
-        if (text) {
+        if (text && text.length <= 120) {
           lastWelcomeRef.current = text;
           setWelcomeMsg(text);
           saveWelcomeMessage(text);
@@ -131,7 +135,7 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
         throw new Error('empty');
       } catch {
         setWelcomeError(true);
-        setWelcomeMsg('');
+        setWelcomeMsg('Vivica is brooding. Try again.');
       }
     }, [conversation?.id, conversation?.messages.length]);
 
@@ -204,7 +208,7 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
                 onClick={() => welcomeError && fetchWelcome()}
                 className={`text-lg text-muted-foreground ${animateWelcome ? 'fade-in slide-up' : ''} ${welcomeError ? 'cursor-pointer' : ''}`}
               >
-                {welcomeError ? "Couldn't load Vivica's welcome. Tap to retry." : (welcomeMsg || '')}
+                {welcomeMsg}
               </p>
             </div>
 
