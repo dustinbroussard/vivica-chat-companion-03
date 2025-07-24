@@ -673,15 +673,20 @@ const Index = () => {
   };
 
   const handleRenameConversation = (conversationId: string, newTitle: string) => {
-    const updatedConversations = conversations.map(conv =>
+    // Update only the title while keeping each conversation's unique ID intact
+    const updatedConversations = conversations.map((conv) =>
       conv.id === conversationId ? { ...conv, title: newTitle, autoTitled: true } : conv
     );
     setConversations(updatedConversations);
 
+    // Re-sync the active conversation from the updated list so UI state stays consistent
     if (currentConversation?.id === conversationId) {
-      setCurrentConversation({ ...currentConversation, title: newTitle, autoTitled: true });
+      const updatedCurrent = updatedConversations.find((c) => c.id === conversationId);
+      if (updatedCurrent) {
+        setCurrentConversation(updatedCurrent);
+      }
     }
-    
+
     toast.success("Conversation renamed");
   };
 
