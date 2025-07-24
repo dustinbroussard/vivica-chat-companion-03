@@ -17,7 +17,7 @@ export const ScrollToBottomButton = ({ visible, onClick }: ScrollToBottomButtonP
     <button
       aria-label="Scroll to latest message"
       onClick={onClick}
-      className={`absolute right-4 bottom-24 z-10 p-2 rounded-full bg-accent text-accent-foreground shadow transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      className={`absolute right-4 bottom-24 z-10 p-2 rounded-full bg-background/70 text-foreground shadow-md hover:bg-background/90 transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
     >
       <ArrowDown className="w-5 h-5" />
     </button>
