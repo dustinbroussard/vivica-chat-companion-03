@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { voiceAnimation } from "@/js/voice-animation";
 import { 
   initVoiceMode, 
-  startListening, 
-  stopListening, 
+  startListening,
+  stopListening,
   getIsListening,
-  updateVoiceModeConfig 
+  updateVoiceModeConfig,
+  setVoiceModeActive
 } from "@/js/voice-mode";
 
 interface VoiceAnimationProps {
@@ -38,6 +39,7 @@ export const VoiceAnimation = ({
     voiceAnimation.setState('idle');
     voiceAnimation.hide();
     stopListening();
+    setVoiceModeActive(false);
     onClose();
   };
 
