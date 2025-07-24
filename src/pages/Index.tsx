@@ -560,10 +560,16 @@ const Index = () => {
           return { ...conv, messages: msgs, lastMessage: fullContent, timestamp: new Date() };
         }));
 
-        chatBodyRef.current?.scrollTo({
-          top: chatBodyRef.current.scrollHeight,
-          behavior: 'smooth'
-        });
+        if (chatBodyRef.current) {
+          // Keep auto-scrolling while streaming only if the user is already
+          // near the bottom. Otherwise, show the scroll-to-bottom button.
+          const el = chatBodyRef.current;
+          const atBottom =
+            el.scrollHeight - el.scrollTop <= el.clientHeight + 20;
+          if (atBottom) {
+            el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+          }
+        }
       }
 
       // Conversation finished streaming; attempt auto-title if needed
