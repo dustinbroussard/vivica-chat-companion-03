@@ -232,7 +232,9 @@ export const MemoryModal = ({
           <DialogTitle className="flex items-center gap-2">
             <Brain className="w-5 h-5" />
             Memory Settings
-            <div className={`ml-auto text-xs px-2 py-1 rounded ${isActive ? 'bg-green-500/20 text-green-500' : 'bg-accent/20 text-accent'}`}>
+            <div
+              className={`ml-auto mr-6 text-xs px-2 py-1 rounded ${isActive ? 'bg-green-500/20 text-green-500' : 'bg-accent/20 text-accent'}`}
+            >
               {isActive ? 'Active' : 'Inactive'}
             </div>
           </DialogTitle>
@@ -268,7 +270,6 @@ export const MemoryModal = ({
               </div>
             </div>
             <div className="space-y-4">
-              <Label className="text-base font-semibold">Enable Memory</Label>
               <div className="flex items-center gap-4">
                 <Button
                   variant={isActive ? "default" : "outline"}
