@@ -166,9 +166,9 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
       >
         {!conversation?.messages.length ? (
           // Empty state
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-8 max-w-2xl mx-auto">
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-8 max-w-2xl mx-auto -mt-8">
             <div className="space-y-4">
-              <img src={logoSrc} alt="Vivica" className="w-32 h-32 mx-auto" />
+              <img src={logoSrc} alt="Vivica" className="w-40 h-40 mx-auto" />
               <h2 className="text-3xl font-bold">Welcome to Vivica</h2>
               <p className="text-lg text-muted-foreground">
                 {welcomeMsg || 'Start a new conversation to begin'}
