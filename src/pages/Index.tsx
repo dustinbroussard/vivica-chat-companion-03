@@ -702,19 +702,19 @@ const Index = () => {
   };
 
   const handleRenameConversation = (conversationId: string, newTitle: string) => {
-    // Update only the title while keeping each conversation's unique ID intact
-    const updatedConversations = conversations.map((conv) =>
-      conv.id === conversationId ? { ...conv, title: newTitle, autoTitled: true } : conv
+    // Update only the title on the existing object. Using a functional
+    // update avoids stale state when rename is triggered asynchronously.
+    setConversations(prev =>
+      prev.map(conv =>
+        conv.id === conversationId ? { ...conv, title: newTitle, autoTitled: true } : conv
+      )
     );
-    setConversations(updatedConversations);
 
-    // Re-sync the active conversation from the updated list so UI state stays consistent
-    if (currentConversation?.id === conversationId) {
-      const updatedCurrent = updatedConversations.find((c) => c.id === conversationId);
-      if (updatedCurrent) {
-        setCurrentConversation(updatedCurrent);
-      }
-    }
+    // Keep the currently active conversation object in sync without
+    // replacing its id or other fields.
+    setCurrentConversation(prev =>
+      prev && prev.id === conversationId ? { ...prev, title: newTitle, autoTitled: true } : prev
+    );
 
     toast.success("Conversation renamed");
   };
@@ -790,10 +790,9 @@ const Index = () => {
       const data = await res.json();
       const title = data.choices?.[0]?.message?.content?.trim();
       if (title) {
+        // Reuse the same rename logic used by the manual flow so we don't
+        // replace the conversation object or lose the active ID.
         handleRenameConversation(conversation.id, title.replace(/^"|"$/g, ''));
-        setConversations(prev => prev.map(c =>
-          c.id === conversation.id ? { ...c, autoTitled: true } : c
-        ));
       }
     } catch (e) {
       console.warn('Failed to generate title', e);
