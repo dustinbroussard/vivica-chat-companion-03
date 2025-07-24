@@ -52,7 +52,9 @@
 - **Modern UI & Theme System:**
   - Multiple color themes, dark/light toggle (with advanced dark themes for AMOLED screens).
   - Clean, focused layout designed for both desktop and mobile use.
-  - Floating "scroll to bottom" button appears when new messages arrive while you're reading earlier chat history.
+- Floating "scroll to bottom" button appears when new messages arrive while you're reading earlier chat history.
+- **Improved Code Blocks:**
+  - Code snippets now have Prism-based syntax highlighting, a dark background, and a copy-to-clipboard button.
 
 ---
 
