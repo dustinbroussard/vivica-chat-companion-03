@@ -496,7 +496,10 @@ export function speak(text) {
             vivicaVoiceModeConfig.onListenStateChange('idle');
             setProcessingState(false);
             resolve();
-            // Listening will only restart if the user clicks start again
+            if (voiceModeActive) {
+                debugLog('Restarting listening after speech end');
+                startListening();
+            }
         };
 
         currentSpeechUtterance.onerror = (event) => {
