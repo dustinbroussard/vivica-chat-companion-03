@@ -80,6 +80,8 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
     const { color, variant } = useTheme();
     const logoSrc = `/logo-${color}${variant}.png`;
     const [welcomeMsg, setWelcomeMsg] = useState('');
+    const [animateWelcome, setAnimateWelcome] = useState(false);
+    const lastWelcomeRef = useRef('');
 
     const scrollToBottom = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -95,17 +97,14 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
       if (atBottom) scrollToBottom();
     }, [conversation?.messages, isTyping]);
 
-    // Fetch a dynamic welcome message from the LLM whenever the welcome screen appears
+    // Fetch a dynamic welcome message from the LLM whenever the welcome screen is visible
     useEffect(() => {
+      if (!conversation || conversation.messages.length) return;
+
       const fetchWelcome = async () => {
         if (conversation?.messages.length) return;
-        // Try cached messages first
-        const cached = await getCachedWelcomeMessages();
-        if (cached.length) {
-          setWelcomeMsg(cached[cached.length - 1].text);
-          return;
-        }
-        try {
+
+        const getFresh = async () => {
           const raw = localStorage.getItem('vivica-profiles') || '[]';
           const profiles = JSON.parse(raw) as ProfileBrief[];
           const vivica = profiles.find(p => p.isVivica) || Storage.createVivicaProfile();
@@ -113,7 +112,6 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
           const apiKey = localStorage.getItem('openrouter-api-key');
           if (!apiKey) throw new Error('missing api key');
 
-          // Use Vivica's persona/model to generate the opening line
           const chatService = new ChatService(apiKey);
           const systemPrompt = vivica.systemPrompt;
           const prompt = `${systemPrompt}\n\nGive me a single, short, witty, and slightly unpredictable welcome message as Vivica. Make it snarky, playful, or a little challenging, but never mention being an AI. Don’t repeat past responses.`;
@@ -126,21 +124,61 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
             max_tokens: 60,
           });
           const data = await res.json();
-          const text = data.choices?.[0]?.message?.content?.trim();
+          return data.choices?.[0]?.message?.content?.trim();
+        };
+
+        try {
+          let text = await getFresh();
+          if (text && text === lastWelcomeRef.current) {
+            text = await getFresh();
+          }
+
           if (text) {
+            lastWelcomeRef.current = text;
             setWelcomeMsg(text);
-            saveWelcomeMessage(text); // Cache for later
-          } else {
-            setWelcomeMsg('Well, well. Look who finally showed up.');
+            saveWelcomeMessage(text);
+            setAnimateWelcome(true);
+            return;
           }
         } catch {
-          // If the call fails (offline, quota, etc.), use a hardcoded snarky line
-          setWelcomeMsg('Well, well. Look who finally showed up.');
+          // Ignore and fall back to cache
+        }
+
+        const cached = await getCachedWelcomeMessages();
+        const fallback = cached[cached.length - 1]?.text || 'Well, well. Look who finally showed up.';
+        if (fallback !== lastWelcomeRef.current) {
+          lastWelcomeRef.current = fallback;
+          setWelcomeMsg(fallback);
+          setAnimateWelcome(true);
+        } else {
+          setWelcomeMsg(fallback);
+          setAnimateWelcome(true);
         }
       };
 
       fetchWelcome();
-    }, [conversation?.id]);
+
+      const onFocus = () => fetchWelcome();
+      const onVisibility = () => {
+        if (document.visibilityState === 'visible') fetchWelcome();
+      };
+      window.addEventListener('focus', onFocus);
+      document.addEventListener('visibilitychange', onVisibility);
+      const interval = window.setInterval(fetchWelcome, 20000);
+
+      return () => {
+        window.removeEventListener('focus', onFocus);
+        document.removeEventListener('visibilitychange', onVisibility);
+        clearInterval(interval);
+      };
+    }, [conversation?.id, conversation?.messages.length]);
+
+    useEffect(() => {
+      if (!welcomeMsg) return;
+      setAnimateWelcome(true);
+      const t = setTimeout(() => setAnimateWelcome(false), 400);
+      return () => clearTimeout(t);
+    }, [welcomeMsg]);
 
 
     const handleCopyMessage = (content: string) => {
@@ -167,7 +205,7 @@ export const ChatBody = forwardRef<HTMLDivElement, ChatBodyProps>(
             <div className="space-y-4">
               <img src={logoSrc} alt="Vivica" className="w-40 h-40 mx-auto" />
               <h2 className="text-3xl font-bold">Welcome to Vivica</h2>
-              <p className="text-lg text-muted-foreground">
+              <p className={`text-lg text-muted-foreground ${animateWelcome ? 'fade-in slide-up' : ''}`}>
                 {welcomeMsg || 'Start a new conversation to begin'}
               </p>
             </div>
