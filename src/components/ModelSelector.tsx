@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useOpenRouterModels, OpenRouterModel } from "@/hooks/useOpenRouterModels";
+import { ScrollArea } from "@/components/ui/scroll-area"; // add scroll area for fixed-height menu
 
 interface ModelSelectorProps {
   value: string;
@@ -102,10 +103,16 @@ export const ModelSelector = ({ value, onValueChange, placeholder = "Select a mo
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0 max-w-sm" align="start">
+      <PopoverContent
+        className="w-full p-0 max-w-sm"
+        align="start"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <Command>
           <CommandInput placeholder="Search models..." className="h-9" />
-          <CommandList className="max-h-[60vh] overflow-y-auto touch-pan-y">
+          {/* Wrap list in ScrollArea to keep menu open while scrolling */}
+          <ScrollArea className="max-h-60 overflow-y-auto">
+            <CommandList className="touch-pan-y">
             <CommandEmpty>No models found.</CommandEmpty>
             {groupedModels.map(({ provider, models: providerModels }) => (
               <CommandGroup key={provider} heading={provider.charAt(0).toUpperCase() + provider.slice(1)}>
@@ -149,9 +156,10 @@ export const ModelSelector = ({ value, onValueChange, placeholder = "Select a mo
                     </div>
                   </CommandItem>
                 ))}
-              </CommandGroup>
-            ))}
-          </CommandList>
+                </CommandGroup>
+              ))}
+            </CommandList>
+          </ScrollArea>
         </Command>
       </PopoverContent>
     </Popover>
