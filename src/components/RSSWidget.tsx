@@ -69,6 +69,7 @@ export const RSSWidget = ({ onSendMessage, onNewChat }: RSSWidgetProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [opacity, setOpacity] = useState(1);
+  const [injecting, setInjecting] = useState(false);
 
   useEffect(() => {
     const loadRSSFeeds = async () => {
@@ -143,6 +144,9 @@ export const RSSWidget = ({ onSendMessage, onNewChat }: RSSWidgetProps) => {
       return;
     }
 
+    if (injecting) return;
+    setInjecting(true);
+
     try {
       const article = await fetchArticleText(currentHeadline.link);
       const content = article || currentHeadline.description || '';
@@ -166,6 +170,9 @@ export const RSSWidget = ({ onSendMessage, onNewChat }: RSSWidgetProps) => {
       onSendMessage(messageContent);
       toast.error('Failed to load full article, using summary.');
     }
+    finally {
+      setInjecting(false);
+    }
   };
 
   return (
@@ -173,13 +180,21 @@ export const RSSWidget = ({ onSendMessage, onNewChat }: RSSWidgetProps) => {
       <div className="text-sm transition-opacity duration-300" style={{ opacity }}>
         <Button
           variant="ghost"
-          className="w-full h-auto p-0 text-foreground hover:text-accent justify-start gap-2"
+          className="w-full h-auto p-0 text-foreground hover:text-accent justify-start gap-2 relative"
           onClick={handleHeadlineClick}
+          disabled={injecting}
+          aria-busy={injecting}
         >
-          <span className="shrink-0">📰</span>
-          <span className="truncate text-left">{currentHeadline.title}</span>
-          {currentHeadline.link.startsWith('http') && (
-            <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-70 ml-auto" />
+          {injecting ? (
+            <Loader2 className="w-4 h-4 animate-spin text-accent" />
+          ) : (
+            <>
+              <span className="shrink-0">📰</span>
+              <span className="truncate text-left">{currentHeadline.title}</span>
+              {currentHeadline.link.startsWith('http') && (
+                <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-70 ml-auto" />
+              )}
+            </>
           )}
         </Button>
       </div>

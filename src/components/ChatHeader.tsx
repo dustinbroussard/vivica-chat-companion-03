@@ -1,5 +1,6 @@
 
-import { Menu, Sun, Moon, Bookmark, Sparkles } from "lucide-react";
+import { Menu, Sun, Moon, Bookmark, Sparkles, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ProfileSwitcher } from "./ProfileSwitcher";
 import { useTheme } from "@/hooks/useTheme";
@@ -32,6 +33,17 @@ export const ChatHeader = ({
   onSaveSummary,
 }: ChatHeaderProps) => {
   const { variant, setVariant } = useTheme();
+  const [saving, setSaving] = useState(false);
+
+  const handleSaveClick = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await onSaveSummary();
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const toggleVariant = () => {
     setVariant(variant === 'dark' ? 'light' : 'dark');
@@ -64,10 +76,16 @@ export const ChatHeader = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={onSaveSummary}
+          onClick={handleSaveClick}
           title="Save & Summarize conversation"
+          disabled={saving}
+          aria-busy={saving}
         >
-          <Bookmark className="w-4 h-4" />
+          {saving ? (
+            <Loader2 className="w-4 h-4 animate-spin text-accent" />
+          ) : (
+            <Bookmark className="w-4 h-4" />
+          )}
         </Button>
         <Button variant="ghost" size="icon" onClick={toggleVariant}>
           {variant === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
