@@ -71,6 +71,29 @@ let analyser = null;
 let audioStream = null;
 let volumeInterval = null;
 
+async function ensureMicrophonePermission() {
+    try {
+        if (!navigator.permissions) {
+            await navigator.mediaDevices.getUserMedia({ audio: true });
+            return true;
+        }
+        const status = await navigator.permissions.query({ name: 'microphone' });
+        debugLog('Mic permission status:', status.state);
+        if (status.state === 'granted') {
+            return true;
+        }
+        if (status.state === 'denied') {
+            debugLog('Microphone permission denied');
+            return false;
+        }
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        return true;
+    } catch (err) {
+        debugLog('Microphone permission error:', err);
+        return false;
+    }
+}
+
 // --- Configuration (can be passed from main.js or managed internally) ---
 let vivicaVoiceModeConfig = {
     systemPrompt: 'You are Vivica, a helpful AI assistant.',
@@ -309,7 +332,10 @@ function initSpeechRecognition() {
             vivicaVoiceModeConfig.onSpeechEnd();
             vivicaVoiceModeConfig.onListenStateChange('idle');
             stopAudioVisualization();
-            // Do not automatically restart recognition
+            if (voiceModeActive) {
+                debugLog('Restarting recognition after end');
+                startListening();
+            }
         };
 
     } else {
@@ -331,10 +357,14 @@ export async function startListening() {
     }
     if (recognition && !isListening) {
         try {
+            const permitted = await ensureMicrophonePermission();
+            if (!permitted) {
+                throw new Error('Microphone permission denied');
+            }
             // Request mic permission via the visualizer setup
             await startAudioVisualization();
             recognition.start();
-            debugLog('Listening started.');
+            debugLog('Listening start requested.');
         } catch (e) {
             console.error('Failed to start recognition:', e);
             vivicaVoiceModeConfig.onSpeechError(e);
