@@ -104,9 +104,16 @@ export const ModelSelector = ({ value, onValueChange, placeholder = "Select a mo
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-full p-0 max-w-sm"
+        /* keep menu height manageable and scrollable */
+        className="w-full p-0 max-w-sm max-h-60 overflow-y-auto"
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => {
+          // allow scrolling without closing the popover
+          if ((e.target as HTMLElement).closest('[cmdk-list]')) {
+            e.preventDefault();
+          }
+        }}
       >
         <Command>
           <CommandInput placeholder="Search models..." className="h-9" />
