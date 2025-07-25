@@ -11,6 +11,7 @@ export interface BraveSearchResponse {
 
 export async function searchBrave(query: string, apiKey: string): Promise<BraveResult[]> {
   const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=5`;
+  // TODO: support multiple Brave keys with retry logic similar to ChatService
   const resp = await fetch(url, {
     headers: {
       'Accept': 'application/json',

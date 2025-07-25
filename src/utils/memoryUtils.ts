@@ -137,6 +137,7 @@ export async function saveConversationMemory(
   `;
 
   try {
+    // TODO: refactor to use ChatService so we get API key fallback and telemetry
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
