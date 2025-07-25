@@ -62,15 +62,22 @@ export const useVoice = (): UseVoiceReturn => {
   const animationFrameRef = useRef<number>();
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  // Check browser support
+  // Check browser support for SpeechRecognition
   useEffect(() => {
-    const hasMediaDevices = 'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices;
-    const hasAudioContext = 'AudioContext' in window || 'webkitAudioContext' in window;
-    const hasSpeechRecognition = 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
-    const hasSpeechSynthesis = 'speechSynthesis' in window;
-
-    setIsSupported(hasMediaDevices && hasAudioContext && hasSpeechRecognition && hasSpeechSynthesis);
+    let hasSpeechRecognition = false;
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      hasSpeechRecognition = true;
+    }
+    setIsSupported(hasSpeechRecognition);
   }, []);
+
+  useEffect(() => {
+    if (isSupported) {
+      console.log('SpeechRecognition supported');
+    } else {
+      console.log('SpeechRecognition not supported');
+    }
+  }, [isSupported]);
 
   // Audio level monitoring
   const monitorAudioLevel = useCallback(() => {
@@ -153,9 +160,12 @@ export const useVoice = (): UseVoiceReturn => {
         }
       }
 
-      setTranscript(finalTranscript || interimTranscript);
+      setTranscript(prev => prev + interimTranscript); // Append interim results
+      console.log('onresult interim:', interimTranscript);
 
       if (finalTranscript) {
+        console.log('Final transcript:', finalTranscript);
+        setTranscript(prev => prev + finalTranscript);
         setState('processing');
         recognition.stop();
       }
