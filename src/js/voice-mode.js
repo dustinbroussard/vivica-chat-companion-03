@@ -262,8 +262,8 @@ function stopAudioVisualization() {
  * Initializes the Speech Recognition API.
  */
 function initSpeechRecognition() {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        const Recog = window.webkitSpeechRecognition || window.SpeechRecognition;
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+        const Recog = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new Recog();
         recognition.continuous = false;
         recognition.interimResults = true; // Enable interim for Android to detect speech start
@@ -285,6 +285,7 @@ function initSpeechRecognition() {
         };
 
         recognition.onresult = (event) => {
+            console.log('[VoiceMode] onresult', event);
             if (handledSpeech) return; // Ignore duplicate results
 
             resetSilenceTimer(); // Reset on any speech input
@@ -313,6 +314,7 @@ function initSpeechRecognition() {
         };
 
         recognition.onerror = function(event) {
+            console.error('[VoiceMode] onerror', event);
             debugLog('Speech recognition error:', event.error);
             isListening = false;
             handledSpeech = false;
@@ -322,11 +324,12 @@ function initSpeechRecognition() {
             vivicaVoiceModeConfig.onListenStateChange('idle');
             stopAudioVisualization();
             if (window.showToast) {
-                window.showToast('Voice error: ' + event.error, 'error');
+                window.showToast('Voice error: ' + event.error + '. Please try Chrome or Edge.', 'error');
             }
         };
 
         recognition.onend = () => {
+            console.log('[VoiceMode] onend');
             debugLog('Speech recognition ended');
             isListening = false;
             handledSpeech = false;
@@ -342,7 +345,7 @@ function initSpeechRecognition() {
 
     } else {
         console.warn('Web Speech API not supported in this browser.');
-        if (window.showToast) window.showToast('Voice mode not supported on this device/browser.', 'error');
+        if (window.showToast) window.showToast('Voice mode not supported on this device/browser. Please use Chrome or Edge.', 'error');
     }
 }
 
@@ -350,8 +353,8 @@ function initSpeechRecognition() {
  * Starts speech recognition and requests microphone access if needed.
  */
 export async function startListening() {
-    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-        if (window.showToast) window.showToast('Voice mode not supported on this device/browser.');
+    if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+        if (window.showToast) window.showToast('Voice mode not supported on this device/browser. Please use Chrome or Edge.');
         return;
     }
     debugLog('startListening called');
@@ -375,7 +378,7 @@ export async function startListening() {
             vivicaVoiceModeConfig.onSpeechError(e);
             vivicaVoiceModeConfig.onListenStateChange('idle');
             stopAudioVisualization();
-            if (window.showToast) window.showToast('Voice error: ' + e.message, 'error');
+            if (window.showToast) window.showToast('Voice error: ' + e.message + '. Please try Chrome or Edge.', 'error');
         }
     }
 }
