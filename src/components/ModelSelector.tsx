@@ -1,6 +1,6 @@
 
-import { useState, useMemo } from "react";
-import { Check, ChevronDown, Search, Loader2 } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Check, ChevronDown, Search, Loader2, Info } from "lucide-react";
 import {
   Command,
   CommandEmpty,
@@ -27,7 +27,14 @@ interface ModelSelectorProps {
 
 export const ModelSelector = ({ value, onValueChange, placeholder = "Select a model..." }: ModelSelectorProps) => {
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null); // track which model row is expanded on mobile
   const { models, loading, error } = useOpenRouterModels();
+  // reset expanded row when dropdown closes
+  useEffect(() => {
+    if (!open) {
+      setExpanded(null);
+    }
+  }, [open]);
 
   const selectedModel = useMemo(() => {
     return models.find((model) => model.id === value);
@@ -105,7 +112,7 @@ export const ModelSelector = ({ value, onValueChange, placeholder = "Select a mo
       </PopoverTrigger>
       <PopoverContent
         /* keep menu height manageable and scrollable */
-        className="w-full p-0 max-w-sm max-h-60 overflow-y-auto"
+        className="w-full p-0 max-w-sm max-h-[70vh] sm:max-h-60 overflow-y-auto"
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onPointerDownOutside={(e) => {
@@ -118,7 +125,7 @@ export const ModelSelector = ({ value, onValueChange, placeholder = "Select a mo
         <Command>
           <CommandInput placeholder="Search models..." className="h-9" />
           {/* Wrap list in ScrollArea to keep menu open while scrolling */}
-          <ScrollArea className="max-h-60 overflow-y-auto">
+          <ScrollArea className="max-h-[70vh] sm:max-h-60 overflow-y-auto">
             <CommandList className="touch-pan-y">
             <CommandEmpty>No models found.</CommandEmpty>
             {groupedModels.map(({ provider, models: providerModels }) => (
@@ -131,35 +138,68 @@ export const ModelSelector = ({ value, onValueChange, placeholder = "Select a mo
                       onValueChange(model.id);
                       setOpen(false);
                     }}
-                    className="py-3"
+                    className={cn(
+                      "py-2 sm:py-3 min-h-11",
+                      value === model.id && "bg-accent/10"
+                    )}
                   >
-                    <div className="flex flex-col gap-1 w-full">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm truncate">
-                          {model.name || model.id}
-                        </span>
-                        <Check
-                          className={cn(
-                            "ml-2 h-4 w-4 shrink-0",
-                            value === model.id ? "opacity-100" : "opacity-0"
+                    <div className="flex items-center w-full">
+                      <div className="flex flex-col gap-1 flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-sm truncate">
+                            {model.name || model.id}
+                          </span>
+                          {model.id.includes(":free") && (
+                            <span className="ml-2 rounded bg-secondary px-1 text-xs sm:hidden">
+                              Free
+                            </span>
                           )}
-                        />
-                      </div>
-                      {model.description && (
-                        <span className="text-xs text-muted-foreground line-clamp-2">
-                          {model.description}
-                        </span>
-                      )}
-                      <div className="flex gap-2 text-xs text-muted-foreground">
-                        {model.context_length && (
-                          <span>Ctx: {(model.context_length / 1000).toFixed(0)}K</span>
-                        )}
-                        {model.pricing && (
-                          <span>
-                            ${parseFloat(model.pricing.prompt).toFixed(4)}/1K
+                        </div>
+                        {model.description && (
+                          <span
+                            className={cn(
+                              "text-xs text-muted-foreground",
+                              expanded === model.id ? "block" : "hidden",
+                              "sm:block"
+                            )}
+                          >
+                            {model.description}
                           </span>
                         )}
+                        <div
+                          className={cn(
+                            "gap-2 text-xs text-muted-foreground",
+                            expanded === model.id ? "flex" : "hidden",
+                            "sm:flex"
+                          )}
+                        >
+                          {model.context_length && (
+                            <span>Ctx: {(model.context_length / 1000).toFixed(0)}K</span>
+                          )}
+                          {model.pricing && (
+                            <span>
+                              ${parseFloat(model.pricing.prompt).toFixed(4)}/1K
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="ml-2 sm:hidden"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpanded(expanded === model.id ? null : model.id);
+                        }}
+                      >
+                        <Info className="w-4 h-4" />
+                      </Button>
+                      <Check
+                        className={cn(
+                          "ml-2 h-4 w-4 shrink-0",
+                          value === model.id ? "opacity-100" : "opacity-0"
+                        )}
+                      />
                     </div>
                   </CommandItem>
                 ))}
