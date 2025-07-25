@@ -64,6 +64,8 @@ let handledSpeech = false; // Flag to track if we've processed speech already
 // Track whether the overall voice mode UI is active. Used to
 // determine if recognition should auto-restart when it ends.
 let voiceModeActive = false;
+// Track if the user explicitly stopped listening
+let userStopped = false;
 
 // Audio visualization variables
 let audioCtx = null;
@@ -275,7 +277,7 @@ function initSpeechRecognition() {
         }
 
         recognition.onstart = () => {
-            debugLog('Speech recognition started.');
+            debugLog('Speech recognition started');
             isListening = true;
             vivicaVoiceModeConfig.onSpeechStart();
             vivicaVoiceModeConfig.onListenStateChange('listening');
@@ -299,14 +301,13 @@ function initSpeechRecognition() {
 
             if (finalTranscript) {
                 handledSpeech = true;
-                debugLog('Final speech result:', finalTranscript);
+                debugLog('Final result:', finalTranscript);
                 let retryBtn = document.getElementById('voice-retry-btn');
                 if (retryBtn) retryBtn.style.display = 'none';
                 vivicaVoiceModeConfig.onSpeechResult(finalTranscript.trim(), true);
-                // Stop listening once we have a final result
                 stopListening();
             } else {
-                debugLog('Interim speech result:', interimTranscript);
+                debugLog('Interim result:', interimTranscript);
                 vivicaVoiceModeConfig.onSpeechResult(interimTranscript.trim(), false);
             }
         };
@@ -315,6 +316,7 @@ function initSpeechRecognition() {
             debugLog('Speech recognition error:', event.error);
             isListening = false;
             handledSpeech = false;
+            userStopped = true;
             clearSilenceTimer();
             vivicaVoiceModeConfig.onSpeechError(event.error);
             vivicaVoiceModeConfig.onListenStateChange('idle');
@@ -325,15 +327,15 @@ function initSpeechRecognition() {
         };
 
         recognition.onend = () => {
-            debugLog('Speech recognition ended.');
+            debugLog('Speech recognition ended');
             isListening = false;
             handledSpeech = false;
             clearSilenceTimer();
             vivicaVoiceModeConfig.onSpeechEnd();
             vivicaVoiceModeConfig.onListenStateChange('idle');
             stopAudioVisualization();
-            if (voiceModeActive) {
-                debugLog('Restarting recognition after end');
+            if (voiceModeActive && !userStopped) {
+                debugLog('Auto-restarting recognition');
                 startListening();
             }
         };
@@ -352,11 +354,14 @@ export async function startListening() {
         if (window.showToast) window.showToast('Voice mode not supported on this device/browser.');
         return;
     }
+    debugLog('startListening called');
     if (!recognition) {
         initSpeechRecognition();
     }
     if (recognition && !isListening) {
         try {
+            userStopped = false;
+            handledSpeech = false;
             const permitted = await ensureMicrophonePermission();
             if (!permitted) {
                 throw new Error('Microphone permission denied');
@@ -383,6 +388,7 @@ export function stopListening() {
         recognition.stop();
         debugLog('Listening stopped.');
         isListening = false;
+        userStopped = true;
         clearSilenceTimer();
         stopAudioVisualization();
         vivicaVoiceModeConfig.onListenStateChange('idle');
@@ -393,6 +399,7 @@ export function stopListening() {
  * Toggles speech recognition on/off.
  */
 export function toggleListening() {
+    debugLog('toggleListening', isListening ? 'stopping' : 'starting');
     if (isListening) {
         stopListening();
     } else {
