@@ -48,12 +48,26 @@ interface UseVoiceReturn {
   speak: (text: string) => Promise<void>;
 }
 
-export const useVoice = (): UseVoiceReturn => {
+interface UseVoiceConfig {
+  onSpeechResult?: (transcript: string, isFinal: boolean) => void;
+  onSpeechStart?: () => void;
+  onSpeechEnd?: () => void;
+  onSpeechError?: (error: string) => void;
+  onSpeakingStart?: () => void;
+  onSpeakingEnd?: () => void;
+  onSpeakingError?: (error: string) => void;
+  onStateChange?: (state: VoiceState) => void;
+  onVisualizerData?: (level: number) => void;
+}
+
+export const useVoice = (config: UseVoiceConfig = {}): UseVoiceReturn => {
   const [state, setState] = useState<VoiceState>('idle');
   const [audioLevel, setAudioLevel] = useState(0);
   const [transcript, setTranscript] = useState('');
   const [isSupported, setIsSupported] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -61,14 +75,15 @@ export const useVoice = (): UseVoiceReturn => {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const animationFrameRef = useRef<number>();
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const silenceTimerRef = useRef<NodeJS.Timeout>();
+  const SILENCE_TIMEOUT = 3000; // 3 seconds
 
   // Check browser support for SpeechRecognition
   useEffect(() => {
-    let hasSpeechRecognition = false;
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      hasSpeechRecognition = true;
-    }
-    setIsSupported(hasSpeechRecognition);
+    setIsSupported(
+      ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) &&
+      'speechSynthesis' in window
+    );
   }, []);
 
   useEffect(() => {
@@ -138,36 +153,68 @@ export const useVoice = (): UseVoiceReturn => {
     const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognitionClass();
 
-    recognition.continuous = false; // <-- Android prefers non-continuous mode
+    // Optimize for Android and mobile
+    recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
+    recognition.maxAlternatives = 3;
 
     recognition.onstart = () => {
       setState('listening');
+      setIsListening(true);
+      config.onSpeechStart?.();
+      config.onStateChange?.('listening');
       monitorAudioLevel();
+      resetSilenceTimer();
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let transcript = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript;
+      let interimTranscript = '';
+      let finalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
       }
-      setTranscript(transcript);
-      setState('processing');
-      recognition.stop();
+
+      resetSilenceTimer();
+
+      if (interimTranscript) {
+        config.onSpeechResult?.(interimTranscript, false);
+      }
+
+      if (finalTranscript) {
+        setTranscript(finalTranscript);
+        config.onSpeechResult?.(finalTranscript, true);
+        setState('processing');
+        config.onStateChange?.('processing');
+        recognition.stop();
+      }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      setError(`Speech recognition error: ${event.error}`);
+      const errorMsg = `Speech recognition error: ${event.error}`;
+      setError(errorMsg);
+      config.onSpeechError?.(errorMsg);
       setState('idle');
+      setIsListening(false);
+      config.onStateChange?.('idle');
+      clearSilenceTimer();
     };
 
     recognition.onend = () => {
       setState('idle');
+      setIsListening(false);
+      config.onSpeechEnd?.();
+      config.onStateChange?.('idle');
+      clearSilenceTimer();
     };
 
     recognitionRef.current = recognition;
-  }, [isSupported, monitorAudioLevel]);
+  }, [isSupported, config, monitorAudioLevel]);
 
   // Start voice capture
   const start = useCallback(async () => {
@@ -221,23 +268,79 @@ export const useVoice = (): UseVoiceReturn => {
   const speak = useCallback((text: string): Promise<void> => {
     return new Promise<void>((resolve, reject) => {
       if (!('speechSynthesis' in window)) {
-        return reject(new Error('TTS not supported'));
+        const err = 'TTS not supported';
+        config.onSpeakingError?.(err);
+        return reject(new Error(err));
       }
 
       const synth = window.speechSynthesis;
+      
+      // Cancel any ongoing speech
+      synth.cancel();
+      
       let voices = synth.getVoices();
+      let utterance: SpeechSynthesisUtterance;
 
-      // If voices not loaded yet, wait for voiceschanged event
-      if (!voices.length) {
-        synth.onvoiceschanged = () => {
-          voices = synth.getVoices();
-          speakWithVoice(text, voices, resolve, reject);
+      const speakWithVoice = () => {
+        utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        
+        // Prefer Google's English voices if available
+        const preferredVoice = voices.find(v => 
+          v.lang === 'en-US' && v.name.includes('Google')
+        ) || voices.find(v => v.lang.startsWith('en'));
+        
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+          debugLog('Using voice:', preferredVoice.name);
+        }
+
+        // Android-specific optimized settings
+        utterance.rate = 0.95;
+        utterance.pitch = 0.8;
+
+        utterance.onstart = () => {
+          setState('speaking');
+          setIsSpeaking(true);
+          config.onSpeakingStart?.();
+          config.onStateChange?.('speaking');
         };
+
+        utterance.onend = () => {
+          setState('idle');
+          setIsSpeaking(false);
+          config.onSpeakingEnd?.();
+          config.onStateChange?.('idle');
+          resolve();
+        };
+
+        utterance.onerror = (event) => {
+          const errMsg = `Speech error: ${event.error}`;
+          setState('idle');
+          setIsSpeaking(false);
+          config.onSpeakingError?.(errMsg);
+          config.onStateChange?.('idle');
+          reject(new Error(errMsg));
+        };
+
+        synth.speak(utterance);
+      };
+
+      if (!voices.length) {
+        // Wait for voices to load
+        const onVoicesChanged = () => {
+          voices = synth.getVoices();
+          if (voices.length) {
+            synth.onvoiceschanged = null;
+            speakWithVoice();
+          }
+        };
+        synth.onvoiceschanged = onVoicesChanged;
       } else {
-        speakWithVoice(text, voices, resolve, reject);
+        speakWithVoice();
       }
     });
-  }, []);
+  }, [config]);
 
   const speakWithVoice = (
     text: string,
