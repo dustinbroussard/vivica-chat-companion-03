@@ -531,6 +531,8 @@ const Index = () => {
         stream: true,
         isCodeRequest: isCodeReq
       });
+      // TODO: if isCodeReq, send full code output to Vivica's model for a human
+      // explanation before finalizing the message
 
       let fullContent = '';
       let isCodeResp = false;

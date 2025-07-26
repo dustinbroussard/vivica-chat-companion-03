@@ -31,6 +31,10 @@ export interface StreamContent {
 }
 
 export class ChatService {
+  /** Primary key used for OpenRouter requests */
+  // TODO: allow setting multiple keys here instead of pulling from localStorage
+  private apiKey: string;
+  // apiKeyList is unused; keep until multi-key refactor
   private apiKeyList: string[];
   private baseUrl = 'https://openrouter.ai/api/v1';
   private telemetry = {
@@ -224,6 +228,8 @@ export class ChatService {
               const content = parsed.choices?.[0]?.delta?.content;
               if (content) {
                 // If this was a code request, we'll need to send the result to Vivica for summary
+                // TODO: route the final code output back through the persona model
+                // for a plain-English explanation before displaying to the user.
                 yield {
                   content,
                   isCodeRequest: request?.isCodeRequest
