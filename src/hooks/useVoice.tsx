@@ -137,8 +137,8 @@ export const useVoice = (): UseVoiceReturn => {
 
     const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognitionClass();
-    
-    recognition.continuous = true;
+
+    recognition.continuous = false; // <-- Android prefers non-continuous mode
     recognition.interimResults = true;
     recognition.lang = 'en-US';
 
@@ -148,27 +148,13 @@ export const useVoice = (): UseVoiceReturn => {
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let finalTranscript = '';
-      let interimTranscript = '';
-
+      let transcript = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal) {
-          finalTranscript += result[0].transcript;
-        } else {
-          interimTranscript += result[0].transcript;
-        }
+        transcript += event.results[i][0].transcript;
       }
-
-      setTranscript(prev => prev + interimTranscript); // Append interim results
-      console.log('onresult interim:', interimTranscript);
-
-      if (finalTranscript) {
-        console.log('Final transcript:', finalTranscript);
-        setTranscript(prev => prev + finalTranscript);
-        setState('processing');
-        recognition.stop();
-      }
+      setTranscript(transcript);
+      setState('processing');
+      recognition.stop();
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -177,13 +163,11 @@ export const useVoice = (): UseVoiceReturn => {
     };
 
     recognition.onend = () => {
-      if (state === 'listening') {
-        setState('idle');
-      }
+      setState('idle');
     };
 
     recognitionRef.current = recognition;
-  }, [isSupported, monitorAudioLevel, state]);
+  }, [isSupported, monitorAudioLevel]);
 
   // Start voice capture
   const start = useCallback(async () => {
@@ -234,48 +218,48 @@ export const useVoice = (): UseVoiceReturn => {
   }, []);
 
   // Text-to-speech
-  const speak = useCallback(async (text: string): Promise<void> => {
-    if (!text.trim()) return;
-
-    return new Promise((resolve, reject) => {
+  const speak = useCallback((text: string): Promise<void> => {
+    return new Promise<void>((resolve, reject) => {
       if (!('speechSynthesis' in window)) {
-        reject(new Error('Speech synthesis not supported'));
-        return;
+        return reject(new Error('TTS not supported'));
       }
 
-      speechSynthesis.cancel(); // Cancel any ongoing speech
+      const synth = window.speechSynthesis;
+      let voices = synth.getVoices();
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      speechSynthRef.current = utterance;
-
-      utterance.onstart = () => {
-        setState('speaking');
-      };
-
-      utterance.onend = () => {
-        setState('idle');
-        setAudioLevel(0);
-        resolve();
-      };
-
-      utterance.onerror = (event) => {
-        setState('idle');
-        setAudioLevel(0);
-        reject(new Error(`Speech synthesis error: ${event.error}`));
-      };
-
-      // Simulate audio levels during speech
-      const simulateSpeakingLevels = () => {
-        if (state === 'speaking') {
-          setAudioLevel(0.3 + Math.random() * 0.4);
-          setTimeout(simulateSpeakingLevels, 100);
-        }
-      };
-
-      speechSynthesis.speak(utterance);
-      simulateSpeakingLevels();
+      // If voices not loaded yet, wait for voiceschanged event
+      if (!voices.length) {
+        synth.onvoiceschanged = () => {
+          voices = synth.getVoices();
+          speakWithVoice(text, voices, resolve, reject);
+        };
+      } else {
+        speakWithVoice(text, voices, resolve, reject);
+      }
     });
-  }, [state]);
+  }, []);
+
+  const speakWithVoice = (
+    text: string,
+    voices: SpeechSynthesisVoice[],
+    resolve: () => void,
+    reject: (reason: any) => void
+  ) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.voice = voices.find(v => v.lang.startsWith('en')) || null;
+    utterance.onstart = () => setState('speaking');
+    utterance.onend = () => {
+      setState('idle');
+      resolve();
+    };
+    utterance.onerror = (e) => {
+      setState('idle');
+      reject(e.error);
+    };
+
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+  };
 
   // Cleanup on unmount
   useEffect(() => {
