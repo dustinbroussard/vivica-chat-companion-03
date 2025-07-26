@@ -60,8 +60,19 @@ const CommandList = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <CommandPrimitive.List
     ref={ref}
-    className={cn("max-h-[300px] overflow-y-auto overflow-x-hidden", className)}
+    className={cn(
+      "max-h-[300px] overflow-y-auto overflow-x-hidden",
+      "[&::-webkit-scrollbar-thumb]:bg-transparent",
+      "hover:[&::-webkit-scrollbar-thumb]:bg-border",
+      "active:[&::-webkit-scrollbar-thumb]:bg-border",
+      "scrollbar-thin",
+      className
+    )}
     {...props}
+    onTouchMove={(e) => {
+      e.stopPropagation()
+      e.preventDefault()
+    }}
   />
 ))
 

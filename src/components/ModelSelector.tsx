@@ -129,18 +129,24 @@ export const ModelSelector = ({ value, onValueChange, placeholder = "Select a mo
         <Command>
           <CommandInput placeholder="Search models..." className="h-9" />
           {/* Wrap list in ScrollArea to keep menu open while scrolling */}
-          <ScrollArea 
+          <ScrollArea
             ref={scrollRef}
             className="max-h-[70vh] sm:max-h-60"
+            style={{
+              touchAction: 'pan-y',
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'contain'
+            }}
             onPointerDown={(e) => {
-              // Prevents closing when touch-scrolling on mobile
-              if (isMobile) e.preventDefault();
+              // Prevents closing when touch-scrolling 
+              e.preventDefault();
             }}
             onTouchStart={(e) => {
-              // Prevents closing when touch-scrolling on mobile
-              if (isMobile) e.preventDefault();
+              const target = e.target as HTMLElement;
+              if (target.closest('[cmdk-item]')) {
+                e.stopPropagation();
+              }
             }}
-            style={{ touchAction: isMobile ? 'pan-y' : 'auto' }}
           >
             <CommandList className="touch-pan-y">
             <CommandEmpty>No models found.</CommandEmpty>
