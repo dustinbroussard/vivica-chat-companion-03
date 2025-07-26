@@ -114,12 +114,11 @@ export const ModelSelector = ({ value, onValueChange, placeholder = "Select a mo
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        /* keep menu height manageable and scrollable */
-        className="w-full p-0 max-w-sm max-h-[70vh] sm:max-h-60"
+        className="w-full p-0 max-w-sm max-h-[70vh] sm:max-h-60 overflow-y-auto overscroll-contain touch-pan-y"
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onPointerDownOutside={(e) => {
-          // allow scrolling without closing the popover
+          // allow scrolling inside the dropdown without closing
           if ((e.target as HTMLElement).closest('[cmdk-list]') || 
               (e.target as HTMLElement).closest('.scroll-area')) {
             e.preventDefault();
@@ -131,7 +130,7 @@ export const ModelSelector = ({ value, onValueChange, placeholder = "Select a mo
           {/* Wrap list in ScrollArea to keep menu open while scrolling */}
           <ScrollArea
             ref={scrollRef}
-            className="max-h-[70vh] sm:max-h-60"
+            className="max-h-[70vh] sm:max-h-60 overflow-y-auto touch-pan-y"
             style={{
               touchAction: 'pan-y',
               WebkitOverflowScrolling: 'touch',
@@ -141,14 +140,9 @@ export const ModelSelector = ({ value, onValueChange, placeholder = "Select a mo
               // Prevents closing when touch-scrolling 
               e.preventDefault();
             }}
-            onTouchStart={(e) => {
-              const target = e.target as HTMLElement;
-              if (target.closest('[cmdk-item]')) {
-                e.stopPropagation();
-              }
-            }}
+            onTouchStart={(e) => e.stopPropagation()}
           >
-            <CommandList className="touch-pan-y">
+            <CommandList className="touch-pan-y select-none">
             <CommandEmpty>No models found.</CommandEmpty>
             {groupedModels.map(({ provider, models: providerModels }) => (
               <CommandGroup key={provider} heading={provider.charAt(0).toUpperCase() + provider.slice(1)}>
