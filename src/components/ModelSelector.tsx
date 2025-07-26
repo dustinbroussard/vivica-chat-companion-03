@@ -1,5 +1,6 @@
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Check, ChevronDown, Search, Loader2, Info } from "lucide-react";
 import {
   Command,
@@ -26,8 +27,10 @@ interface ModelSelectorProps {
 }
 
 export const ModelSelector = ({ value, onValueChange, placeholder = "Select a model..." }: ModelSelectorProps) => {
+  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null); // track which model row is expanded on mobile
+  const scrollRef = useRef<HTMLDivElement>(null);
   const { models, loading, error } = useOpenRouterModels();
   // reset expanded row when dropdown closes
   useEffect(() => {
@@ -112,12 +115,13 @@ export const ModelSelector = ({ value, onValueChange, placeholder = "Select a mo
       </PopoverTrigger>
       <PopoverContent
         /* keep menu height manageable and scrollable */
-        className="w-full p-0 max-w-sm max-h-[70vh] sm:max-h-60 overflow-y-auto"
+        className="w-full p-0 max-w-sm max-h-[70vh] sm:max-h-60"
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onPointerDownOutside={(e) => {
           // allow scrolling without closing the popover
-          if ((e.target as HTMLElement).closest('[cmdk-list]')) {
+          if ((e.target as HTMLElement).closest('[cmdk-list]') || 
+              (e.target as HTMLElement).closest('.scroll-area')) {
             e.preventDefault();
           }
         }}
@@ -125,7 +129,19 @@ export const ModelSelector = ({ value, onValueChange, placeholder = "Select a mo
         <Command>
           <CommandInput placeholder="Search models..." className="h-9" />
           {/* Wrap list in ScrollArea to keep menu open while scrolling */}
-          <ScrollArea className="max-h-[70vh] sm:max-h-60 overflow-y-auto">
+          <ScrollArea 
+            ref={scrollRef}
+            className="max-h-[70vh] sm:max-h-60"
+            onPointerDown={(e) => {
+              // Prevents closing when touch-scrolling on mobile
+              if (isMobile) e.preventDefault();
+            }}
+            onTouchStart={(e) => {
+              // Prevents closing when touch-scrolling on mobile
+              if (isMobile) e.preventDefault();
+            }}
+            style={{ touchAction: isMobile ? 'pan-y' : 'auto' }}
+          >
             <CommandList className="touch-pan-y">
             <CommandEmpty>No models found.</CommandEmpty>
             {groupedModels.map(({ provider, models: providerModels }) => (
